@@ -56,6 +56,6 @@ En tu servidor Ubuntu:
 ```bash
 sudo apt update
 sudo apt install -y git python3
-git clone https://github.com/tu_usuario/azure-vuln-server.git
+git clone https://github.com/Trejos06/azure-vuln-server.git
 cd azure-vuln-server
 sudo python3 setup_vuln_server.py
