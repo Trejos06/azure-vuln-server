@@ -36,8 +36,19 @@ def install_dvwa():
     run("chown -R www-data:www-data /var/www/html/dvwa")  # Cambia el dueño de los archivos a Apache
     run("cp /var/www/html/dvwa/config/config.inc.php.dist /var/www/html/dvwa/config/config.inc.php")  # Copia el archivo de configuración base
 
-    # Ajusta la configuración para usar MySQL sin contraseña
-    run("sed -i \"s/'password' => 'p@ssw0rd'/'password' => ''/\" /var/www/html/dvwa/config/config.inc.php")
+    # Reemplaza líneas del archivo para que no use variables de entorno
+    config_file = "/var/www/html/dvwa/config/config.inc.php"
+    with open(config_file, "r") as file:
+        lines = file.readlines()
+
+    with open(config_file, "w") as file:
+        for line in lines:
+            if "$_DVWA[ 'db_user' ]" in line:
+                file.write("$_DVWA[ 'db_user' ]     = 'root';\n")
+            elif "$_DVWA[ 'db_password' ]" in line:
+                file.write("$_DVWA[ 'db_password' ] = '';\n")
+            else:
+                file.write(line)
 
     run("systemctl restart apache2")  # Reinicia Apache para aplicar cambios
 
@@ -75,5 +86,5 @@ def main():
     print("DVWA disponible en: http://<TU_IP>/dvwa")
     print("MySQL root sin contraseña (local)")
     print("FTP anónimo habilitado en puerto 21")
-
+    
 main()
