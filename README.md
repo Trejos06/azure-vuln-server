@@ -42,7 +42,7 @@ sudo python3 setup_vuln_server.py
 
 ## 🔐 Paso final necesario: habilitar acceso web y DVWA
 
-### 1. Configurar puerto 80 en Azure
+### 1. Configurar puerto 80 en Azure (Se realiza lo mismo para los demás puertos 22,21,3306 y 8080)
 
 Después de desplegar la VM, en el **portal de Azure**:
 
@@ -90,15 +90,6 @@ Este entorno es **altamente inseguro** por diseño. NO lo uses en producción ni
 - Usa redes privadas o firewalls
 - Toma snapshots si vas a experimentar
 - No guardes datos reales
-
----
-
-## 🚀 Ideas futuras
-
-- Añadir Mutillidae o JuiceShop
-- Instalar Cowrie o T-Pot (honeypots)
-- Integrar Wazuh/Snort para monitoreo Blue Team
-- Automatizar creación de la base de datos
 
 ---
 
