@@ -14,7 +14,7 @@ def escaneo_host_basico(host, puertos):
     """
     print(f"[+] Escaneo básico en el host: {host}\n")
     escaner = nmap.PortScanner()
-    escaner.scan(host, puertos, arguments='-sS --open')
+    escaner.scan(host, puertos, arguments='-sS --open') # Escaneo de los puertos
     resultado = "<<< Puertos abiertos encontrados >>>\n"
 
     if host not in escaner.all_hosts():
@@ -38,12 +38,11 @@ def escaneo_host_avanzado(host, texto):
     Funcion que realiza un escaneo avanzado a los puertos abiertos
     cmd: nmap -Pn -A -sT -T4 -p <puertos_abiertos> <host>
     """
-    puertos = []
+    puertos = [] # Lista para guardar los numeros de puertos abiertos
     for linea in texto.splitlines():
         linea = linea.strip()
         if linea.startswith('Puerto '):
             puertos.append(int(linea.split()[1].rstrip(':')))
-
     puertos_open = ",".join(str(p) for p in sorted(puertos))
 
     print(f"[+] Iniciando el escaneo avanzado en los puertos abiertos\n")
@@ -56,22 +55,15 @@ def escaneo_host_avanzado(host, texto):
         print(resultado)
         return resultado
     
-    os_dict = {}
-
+    os_dict = {} # Diccionario con los SOs encontrados en el escaneo
+    print()
     for info_os in escaner[host]['osmatch']:
-        os_dict = {info_os["name"]:int(info_os['accuracy'])}
+        os_dict[info_os["name"]] = int(info_os['accuracy'])
     
-    os_probable = max(os_dict, key=os_dict.get)
-    acc = os_dict[os_probable]
+    os_probable = max(os_dict, key=os_dict.get) # Obetener el SO más probable
+    acc_percent = os_dict[os_probable] 
 
-    resultado += f" Sistema Operativo: {os_probable} - Precision: {acc}%\n"
-
-
-#    for info in escaner[host]['osmatch']['accuracy'].sorted():
-#        nombre = info.get('name', '')
-#        precision = info.get('accuracy', '')
-#        resultado += "\nInfo de Sistema Operativo:"
-#        resultado += f"\n |-- OS: {nombre}, Precision: {precision}%\n"
+    resultado += f" Sistema Operativo encontrado: {os_probable} - Precision: {acc_percent}%\n"
 
     for protocolo in escaner[host].all_protocols():
         resultado += f"\n[+] Protocolo: {protocolo}\n"
