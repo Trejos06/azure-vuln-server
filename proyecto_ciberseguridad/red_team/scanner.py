@@ -4,8 +4,8 @@ import subprocess
 
 
 host = "74.179.81.132"
-#puertos = '1-200,3306,8080'
-puertos = '21,22,80'
+puertos = '1-200,3306,8080'
+#puertos = '21,22,80'
 
 def escaneo_host_basico(host, puertos):
     """
@@ -63,7 +63,7 @@ def escaneo_host_avanzado(host, texto):
     os_probable = max(os_dict, key=os_dict.get) # Obetener el SO más probable
     acc_percent = os_dict[os_probable] 
 
-    resultado += f" Sistema Operativo encontrado: {os_probable} - Precision: {acc_percent}%\n"
+    resultado += f"\n Sistema Operativo encontrado: {os_probable} - Precision: {acc_percent}%\n"
 
     for protocolo in escaner[host].all_protocols():
         resultado += f"\n[+] Protocolo: {protocolo}\n"
@@ -76,7 +76,7 @@ def escaneo_host_avanzado(host, texto):
             version = info.get('product', '')+info.get('version', '')
             scripts = info.get('script', {})
 
-            resultado += f"\n + Puerto {puerto}/{protocolo}"
+            resultado += f"\n\n + Puerto {puerto}/{protocolo}"
             resultado += f"\n |-- Estado: {info.get('state', '')}"
             resultado += f"\n |-- Servicio: {servicio}"
             resultado += f"\n |-- Version: {version}"
