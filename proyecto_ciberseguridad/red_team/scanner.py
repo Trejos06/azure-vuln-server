@@ -48,7 +48,7 @@ def escaneo_host_avanzado(host, texto):
 
     print(f"\n\n[+] Iniciando el escaneo avanzado en los puertos abiertos\n")
     escaner = nmap.PortScanner()
-    escaner.scan(host, puertos_open, arguments='-Pn -A -sT -T4')
+    escaner.scan(host, puertos_open, arguments='-Pn -A -sT -T4 --traceroute')
 
     if host not in escaner.all_hosts():
         resultado_av += "[!] Host sin respuesta\n"
@@ -90,6 +90,35 @@ def escaneo_host_avanzado(host, texto):
                 resultado_av += f"\n NSE SCRIPTS:"
                 for script_name, script_salida in scripts.items():
                     resultado_av += f"\n   |-- {script_name}: {script_salida}"
+
+
+
+    resultado_av += f"\n\n\n<<< Información de red >>>\n"
+    try:
+        cmd = ["nmap", "-Pn", "-O", "-p", puertos_open, "--traceroute", host]
+        tracerout_salida = subprocess.run(cmd, capture_output=True, text=True)
+        dist_red = re.search(r'Network Distance:\s*(\d+)\s*hops?', tracerout_salida.stdout)
+        dist_red = dist_red.group(1)
+        resultado_av += f"[+] Número de saltos hasta el host: {dist_red}\n"
+
+    except subprocess.CalledProcessError as e:
+        resultado_av += "\n[!] Error al ejecutar traceroute con nmap.\n"
+        resultado_av += e.output if e.output else str(e)
+
+
+#    resultado_av += f"\n\n\n<<< Información de red >>>\n"
+#    dist_red = escaner[host]['distance']
+#    resultado_av += f"[+] Número de saltos hasta el host: {dist_red}\n"
+
+#    traceroute = escaner[host]['trace']
+#    if traceroute:
+#        resultado_av += "\n[+] Traceroute:\n"
+#        for hop_num, hop_info in traceroute.items():
+#            resultado_av += f"Salto {hop_num}: {hop_info.get('ipaddr', '')} ({hop_info.get('rtt', '')} ms)\n"
+#    else:
+#        resultado_av += "\n[!] No se obtuvo información de traceroute.\n"
+
+
     print(resultado_av)
     return resultado_av
 
