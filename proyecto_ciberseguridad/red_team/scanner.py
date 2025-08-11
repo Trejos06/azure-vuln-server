@@ -15,23 +15,23 @@ def escaneo_host_basico(host, puertos):
     print(f"[+] Escaneo básico en el host: {host}\n")
     escaner = nmap.PortScanner()
     escaner.scan(host, puertos, arguments='-sS --open') # Escaneo de los puertos
-    resultado = "<<< Puertos abiertos encontrados >>>\n"
+    resultado_bas = "<<< Puertos abiertos encontrados >>>\n"
 
     if host not in escaner.all_hosts():
-        resultado += "[!] Host sin respuesta\n"
-        print(resultado)
-        return resultado
+        resultado_bas += "[!] Host sin respuesta\n"
+        print(resultado_bas)
+        return resultado_bas
 
     for protocolo in escaner[host].all_protocols():
-        resultado += f"\n[+] Protocolo: {protocolo}\n"
+        resultado_bas += f"\n[+] Protocolo: {protocolo}\n"
         puertos = escaner[host][protocolo]
         if not puertos:
-            resultado += "    (sin puertos reportados)\n"
+            resultado_bas += "    (sin puertos reportados)\n"
         for puerto in sorted(puertos):
             servicio = escaner[host][protocolo][puerto]['name']
-            resultado += f"    Puerto {puerto}: open ({servicio})\n"
-    print(resultado)
-    return resultado
+            resultado_bas += f"    Puerto {puerto}: open ({servicio})\n"
+    print(resultado_bas)
+    return resultado_bas
 
 def escaneo_host_avanzado(host, texto):
     """
@@ -44,50 +44,54 @@ def escaneo_host_avanzado(host, texto):
         if linea.startswith('Puerto '):
             puertos.append(int(linea.split()[1].rstrip(':')))
     puertos_open = ",".join(str(p) for p in sorted(puertos))
+    resultado_av = "<<< Informacion detallada del escaneo >>>\n"
 
-    print(f"[+] Iniciando el escaneo avanzado en los puertos abiertos\n")
+    print(f"\n\n[+] Iniciando el escaneo avanzado en los puertos abiertos\n")
     escaner = nmap.PortScanner()
     escaner.scan(host, puertos_open, arguments='-Pn -A -sT -T4')
-    resultado = "<<< Informacion detallada del escaneo >>>\n"
 
     if host not in escaner.all_hosts():
-        resultado += "[!] Host sin respuesta\n"
-        print(resultado)
-        return resultado
-    
-    os_dict = {} # Diccionario con los SOs encontrados en el escaneo
-    print()
-    for info_os in escaner[host]['osmatch']:
-        os_dict[info_os["name"]] = int(info_os['accuracy'])
-    
-    os_probable = max(os_dict, key=os_dict.get) # Obetener el SO más probable
-    acc_percent = os_dict[os_probable] 
+        resultado_av += "[!] Host sin respuesta\n"
+        print(resultado_av)
+        return resultado_av
 
-    resultado += f"\n Sistema Operativo encontrado: {os_probable} - Precision: {acc_percent}%\n"
+    resultado_av += "\n\n\n<<< Sistemas Operativos encontrados >>>\n"
+    for info_os in escaner[host].get('osmatch',[]):
+        sistema = info_os.get('name','')
+        precision = info_os.get('accuracy','')
+        resultado_av += f"\n[+] Sistema Operativo: {sistema} - Precision: {precision}%\n"
+        indice = 1
+        for info_class in info_os.get('osclass',[]):
+            resultado_av += f"\n |-- Perfil {indice}\n"
+            resultado_av += f"   |-- Tipo: {info_class.get('type','')}\n"
+            resultado_av += f"   |-- Fabricante: {info_class.get('vendor','')}\n"
+            resultado_av += f"   |-- Familia: {info_class.get('osfamily','')}\n"
+            indice += 1
 
+    resultado_av += "\n\n\n<<< Protocolos encontrados >>>\n\n"
     for protocolo in escaner[host].all_protocols():
-        resultado += f"\n[+] Protocolo: {protocolo}\n"
+        resultado_av += f"[+] Protocolo: {protocolo}"
         puertos = escaner[host][protocolo]
         if not puertos:
-            resultado += "    (sin puertos reportados)\n"
+            resultado_av += "    (sin puertos reportados)\n"
         for puerto in sorted(puertos):
             info = escaner[host][protocolo][puerto]
             servicio = info.get('name', '')
             version = info.get('product', '')+info.get('version', '')
             scripts = info.get('script', {})
 
-            resultado += f"\n\n + Puerto {puerto}/{protocolo}"
-            resultado += f"\n |-- Estado: {info.get('state', '')}"
-            resultado += f"\n |-- Servicio: {servicio}"
-            resultado += f"\n |-- Version: {version}"
-            resultado += f"\n |-- Info Extra: {info.get('extrainfo', '')}\n"
+            resultado_av += f"\n\n |-- Puerto {puerto}/{protocolo}\n"
+            resultado_av += f"   |-- Estado: {info.get('state', '')}\n"
+            resultado_av += f"   |-- Servicio: {servicio}\n"
+            resultado_av += f"   |-- Version: {version}\n"
+            resultado_av += f"   |-- Info Extra: {info.get('extrainfo', '')}\n"
 
             if scripts:
-                resultado += f"\n NSE SCRIPTS:"
+                resultado_av += f"\n NSE SCRIPTS:"
                 for script_name, script_salida in scripts.items():
-                    resultado += f"\n |-- {script_name}: {script_salida}"
-    print(resultado)
-    return resultado
+                    resultado_av += f"\n   |-- {script_name}: {script_salida}"
+    print(resultado_av)
+    return resultado_av
 
 if __name__ == "__main__":
     try:
