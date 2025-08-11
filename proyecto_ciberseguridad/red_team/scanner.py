@@ -106,19 +106,6 @@ def escaneo_host_avanzado(host, texto):
         resultado_av += e.output if e.output else str(e)
 
 
-#    resultado_av += f"\n\n\n<<< Información de red >>>\n"
-#    dist_red = escaner[host]['distance']
-#    resultado_av += f"[+] Número de saltos hasta el host: {dist_red}\n"
-
-#    traceroute = escaner[host]['trace']
-#    if traceroute:
-#        resultado_av += "\n[+] Traceroute:\n"
-#        for hop_num, hop_info in traceroute.items():
-#            resultado_av += f"Salto {hop_num}: {hop_info.get('ipaddr', '')} ({hop_info.get('rtt', '')} ms)\n"
-#    else:
-#        resultado_av += "\n[!] No se obtuvo información de traceroute.\n"
-
-
     print(resultado_av)
     return resultado_av
 
