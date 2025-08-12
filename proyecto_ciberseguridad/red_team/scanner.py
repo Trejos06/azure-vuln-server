@@ -97,9 +97,16 @@ def escaneo_host_avanzado(host, texto):
     try:
         cmd = ["nmap", "-Pn", "-O", "-p", puertos_open, "--traceroute", host]
         tracerout_salida = subprocess.run(cmd, capture_output=True, text=True)
-        dist_red = re.search(r'Network Distance:\s*(\d+)\s*hops?', tracerout_salida.stdout)
+        salida = tracerout_salida.stdout
+        dist_red = re.search(r'Network Distance:\s*(\d+)\s*hops?', salida)
         dist_red = dist_red.group(1)
         resultado_av += f"[+] Número de saltos hasta el host: {dist_red}\n"
+        tracert = re.search(r'TRACEROUTE(.+)', salida, re.DOTALL | re.IGNORECASE)
+        if tracert:
+            tracert_txt = tracert.group(1).strip()
+            resultado_av += "\n[+] Traceroute:\n" + tracert_txt + "\n"
+        else:
+            resultado_av += "\n[!] No se encontró sección de traceroute.\n"
 
     except subprocess.CalledProcessError as e:
         resultado_av += "\n[!] Error al ejecutar traceroute con nmap.\n"
