@@ -2,50 +2,55 @@ from datetime import datetime
 import nmap
 import re
 import subprocess
-import time
-
 
 host = "74.179.81.132"
-puertos = '1-200,3306,8080'
-#puertos = '21,22,80'
+rango_puertos = '1-200,3306,8080'
 
-def escaneo_host_basico(host, puertos):
+def escaneo_host_basico(host, rango_puertos):
     """
-    Funcion que realiza un escaneo básico para descubrir puertos abiertos
-    cmd: nmap -sS --open -p <puertos> <host>
+    Realiza un escaneo básico para descubrir puertos abiertos.
+    Ejecuta: nmap -sS --open -p <rango_puertos> <objetivo>
+    Parámetros:
+        host: IP o hostname a escanear.
+        rango_puertos: Puertos a escanear en formato Nmap.
+    Retorna:
+        Texto con el reporte y lista de puertos abiertos.
     """
     puertos_abiertos = []
     print(f"[+] Escaneo básico en el host: {host}\n")
-    resultado_bas = "--------------- Puertos abiertos encontrados ---------------\n"
+    resp_scan_b = "--------------- Puertos abiertos encontrados ---------------\n"
 
+    # Lanzar Nmap (escaneo rápido SYN, solo puertos abiertos)
     try:
         escaner = nmap.PortScanner()
-        escaner.scan(host, puertos, arguments='-sS --open') # Escaneo de los puertos
-    except:
-        resultado_bas += f"[!] Error ejecutando Nmap básico: {e}\n"
-        print(resultado_bas)
-        return resultado_bas, puertos_abiertos
+        escaner.scan(host, rango_puertos, arguments='-sS --open')
+    except Exception as e:
+        resp_scan_b += f"[!] Error ejecutando Nmap básico: {e}\n"
+        print(resp_scan_b)
+        return resp_scan_b, puertos_abiertos
 
+    # Verificación de host presente en resultados parseados
     if host not in escaner.all_hosts():
-        resultado_bas += "[!] Host sin respuesta\n"
-        print(resultado_bas)
-        return resultado_bas
+        resp_scan_b += "[!] Host sin respuesta\n"
+        print(resp_scan_b)
+        return resp_scan_b, puertos_abiertos
 
+    # Recorrido de protocolos y puertos abiertos reportados
     try:
         for protocolo in escaner[host].all_protocols():
-            resultado_bas += f"\n[+] Protocolo: {protocolo}\n"
-            puertos = escaner[host][protocolo]
-            if not puertos:
-                resultado_bas += "    (sin puertos reportados)\n"
-            for puerto in sorted(puertos):
+            resp_scan_b += f"\n[+] Protocolo: {protocolo}\n"
+            puertos_dict = escaner[host][protocolo]
+            if not puertos_dict:
+                resp_scan_b += "    (sin puertos reportados)\n"
+            for puerto in sorted(puertos_dict):
                 puertos_abiertos.append(puerto)
-                servicio = escaner[host][protocolo][puerto]['name']
-                resultado_bas += f"    Puerto {puerto}: open ({servicio})\n"
+                servicio = puertos_dict[puerto]['name']
+                resp_scan_b += f"    Puerto {puerto}: open ({servicio})\n"
     except Exception as e:
-        resultado_bas += f"\n[!] Error procesando salida básica: {e}\n"
+        resp_scan_b += f"\n[!] Error procesando salida básica: {e}\n"
 
-    print(resultado_bas)
-    return resultado_bas, puertos_abiertos
+    print(resp_scan_b)
+    return resp_scan_b, puertos_abiertos
 
 
 #def obtener_puertos_abiertos(salida_escaneo_basis):
@@ -60,144 +65,179 @@ def escaneo_host_basico(host, puertos):
 
 def escaneo_host_avanzado(host, puertos_abiertos):
     """
-    Funcion que realiza un escaneo avanzado a los puertos abiertos
-    cmd: nmap -Pn -A -sT -T4 -p <puertos_abiertos> <host>
+    Realiza un escaneo avanzado de Nmap sobre los puertos abiertos detectados.
+    Ejecuta: nmap -Pn -A -sT -T4 -p <puertos_abiertos> <host>
+    Parámetros:
+        host: IP o hostname a escanear.
+        puertos_abiertos: Puertos abiertos a detallar.
+    Retorna:
+        Texto con reporte detallado (SO, servicios/puertos, scripts).
     """
-    resultado_av = "--------------- Informacion detallada del escaneo ---------------\n"
+    resp_scan_av = "--------------- Informacion detallada del escaneo ---------------\n"
 
+    # Validación temprana: no hay puertos abiertos para escanear
     if not puertos_abiertos:
-        resultado_av += "[!] No hay puertos abiertos para escanear.\n"
-        print(resultado_av)
-        return resultado_av
+        resp_scan_av += "[!] No hay puertos abiertos para escanear.\n"
+        print(resp_scan_av)
+        return resp_scan_av
     
     puertos = ",".join(str(x) for x in puertos_abiertos)
     print(f"\n\n[+] Iniciando el escaneo avanzado en los puertos abiertos\n")
 
+    # Lanzar Nmap en modo avanzado (-A) sobre los puertos abiertos
     try:
         escaner = nmap.PortScanner()
         escaner.scan(host, puertos, arguments='-Pn -A -sT -T4')
     except Exception as e:
-        resultado_av += f"[!] Error ejecutando escaneo avanzado: {e}\n"
-        print(resultado_av)
-        return resultado_av
+        resp_scan_av += f"[!] Error ejecutando escaneo avanzado: {e}\n"
+        print(resp_scan_av)
+        return resp_scan_av
 
+    # Verificación de host presente
     if host not in escaner.all_hosts():
-        resultado_av += "[!] Host sin respuesta\n"
-        print(resultado_av)
-        return resultado_av
+        resp_scan_av += "[!] Host sin respuesta\n"
+        print(resp_scan_av)
+        return resp_scan_av
 
+    # --- Sistemas Operativos (osmatch/osclass) ---
     try:
-        resultado_av += "\n<<< Sistemas Operativos encontrados >>>\n"
-        for info_os in escaner[host].get('osmatch',[]):
-            sistema = info_os.get('name','')
-            precision = info_os.get('accuracy','')
-            resultado_av += f"\n[+] SO: {sistema} - Precision: {precision}%\n"
+        resp_scan_av += "\n<<< Sistemas Operativos encontrados >>>\n"
+        for info_so in escaner[host].get('osmatch', []):
+            nombre_so = info_so.get('name','')
+            precision = info_so.get('accuracy','')
+            resp_scan_av += f"\n[+] SO: {nombre_so} - Precision: {precision}%\n"
             indice = 1
-            for info_class in info_os.get('osclass',[]):
-                resultado_av += f"\n |-- Perfil {indice}\n"
-                resultado_av += f"   |-- Tipo: {info_class.get('type','')}\n"
-                resultado_av += f"   |-- Fabricante: {info_class.get('vendor','')}\n"
-                resultado_av += f"   |-- Familia: {info_class.get('osfamily','')}\n"
+            for perfil in info_so.get('osclass', []):
+                resp_scan_av += f"\n |-- Perfil {indice}\n"
+                resp_scan_av += f"   |-- Tipo: {perfil.get('type','')}\n"
+                resp_scan_av += f"   |-- Fabricante: {perfil.get('vendor','')}\n"
+                resp_scan_av += f"   |-- Familia: {perfil.get('osfamily','')}\n"
                 indice += 1
     except Exception as e:
-        resultado_av += f"\n[!] Error obteniendo información de SO: {e}\n"
+        resp_scan_av += f"\n[!] Error obteniendo información de SO: {e}\n"
 
+    # --- Protocolos y Servicios (por puerto) ---
     try:
-        resultado_av += "\n\n<<< Protocolos encontrados >>>\n\n"
+        resp_scan_av += "\n\n<<< Protocolos encontrados >>>\n\n"
         for protocolo in escaner[host].all_protocols():
-            resultado_av += f"[+] Protocolo: {protocolo}"
+            resp_scan_av += f"[+] Protocolo: {protocolo}"
             puertos = escaner[host][protocolo]
             if not puertos:
-                resultado_av += "    (sin puertos reportados)\n"
+                resp_scan_av += "    (sin puertos reportados)\n"
             for puerto in sorted(puertos):
                 try:
-                    info = escaner[host][protocolo][puerto]
-                    servicio = info.get('name', '')
-                    version = f"{info.get('product', '')} {info.get('version', '')}"
-                    scripts = info.get('script', {})
+                    info_puerto = escaner[host][protocolo][puerto]
+                    servicio = info_puerto.get('name', '')
+                    version = f"{info_puerto.get('product', '')} {info_puerto.get('version', '')}"
+                    scripts = info_puerto.get('script', {})
 
-                    resultado_av += f"\n\n |-- Puerto {puerto}/{protocolo}\n"
-                    resultado_av += f"   |-- Estado: {info.get('state', '')}\n"
-                    resultado_av += f"   |-- Servicio: {servicio}\n"
-                    resultado_av += f"   |-- Version: {version}\n"
-                    resultado_av += f"   |-- Info Extra: {info.get('extrainfo', '')}\n"
+                    resp_scan_av += f"\n\n |-- Puerto {puerto}/{protocolo}\n"
+                    resp_scan_av += f"   |-- Estado: {info_puerto.get('state', '')}\n"
+                    resp_scan_av += f"   |-- Servicio: {servicio}\n"
+                    resp_scan_av += f"   |-- Version: {version}\n"
+                    resp_scan_av += f"   |-- Info Extra: {info_puerto.get('extrainfo', '')}\n"
 
                     if scripts:
-                        resultado_av += f"\n NSE SCRIPTS:"
+                        resp_scan_av += f"\n NSE SCRIPTS:"
                         for script_name, script_salida in scripts.items():
-                            resultado_av += f"\n   |-- {script_name}: {script_salida}"
+                            resp_scan_av += f"\n   |-- {script_name}: {script_salida}"
                 except Exception as e_port:
-                    resultado_av += f"\n   [!] Error procesando puerto {puerto}: {e_port}\n"
+                    resp_scan_av += f"\n   [!] Error procesando puerto {puerto}: {e_port}\n"
     except Exception as e:
-        resultado_av += f"\n[!] Error listando protocolos: {e}\n"
+        resp_scan_av += f"\n[!] Error listando protocolos: {e}\n"
 
-    print(resultado_av)
-    return resultado_av
+    print(resp_scan_av)
+    return resp_scan_av
 
 
-def escaneo_traceroute(host, puerto):
-    resultado_trace = "\n\n<<< Información de red >>>\n"
+def escaneo_traceroute(host, puerto_unico):
+    """
+    Ejecuta un traceroute con Nmap (usando subprocess) para extraer:
+    - Distancia de red
+    - Sección de TRACEROUTE completa
+    Parámetros:
+        host: IP o hostname de destino.
+        puerto_unico: Puerto a usar con -O (mejora probabilidad de distancia).
+    Retorna:
+        Texto con la información de red (distancia + traceroute).
+    """
+    if not puerto_unico:
+        puerto_unico = "80"
+
+    resp_scan_tr = "\n\n<<< Información de red >>>\n"
     try:
-        cmd = ["nmap", "-Pn", "-O", "-p", puerto, "--traceroute", host]
-        tracerout_salida = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        cmd = ["nmap", "-Pn", "-O", "-p", puerto_unico, "--traceroute", host]
+        tracerout_salida = subprocess.run(cmd, capture_output=True, text=True, check=False)
         salida = tracerout_salida.stdout
 
-        dist_red = re.search(r'Network Distance:\s*(\d+)\s*hops?', salida)
-        dist_red = dist_red.group(1)
-        resultado_trace += f"\n[+] Número de saltos hasta el host: {dist_red}\n"
+        # Extraer distancia: "Network Distance: 30 hops"
+        distancia = re.search(r'Network Distance:\s*(\d+)\s*hops?', salida)
+        distancia = distancia.group(1)
+        resp_scan_tr += f"\n[+] Número de saltos hasta el host: {distancia}\n"
         
+        # Extraer bloque de TRACEROUTE (tal cual lo imprime Nmap)
         tracert = re.search(r'TRACEROUTE(.+)', salida, re.DOTALL | re.IGNORECASE)
         if tracert:
             tracert_txt = tracert.group(1).strip()
-            resultado_trace += "\n[+] Traceroute:\n" + tracert_txt + "\n"
+            resp_scan_tr += "\n[+] Traceroute:\n" + tracert_txt + "\n"
         else:
-            resultado_trace += "\n[!] No se encontró sección de traceroute.\n"
+            resp_scan_tr += "\n[!] No se encontró sección de traceroute.\n"
 
+        # Reportar si Nmap devolvió código distinto de 0 (informativo)
         if tracerout_salida.returncode != 0:
-            resultado_trace += f"\n[!] nmap exit {tracerout_salida.returncode}:\n{tracerout_salida.stderr}\n"
+            resp_scan_tr += f"\n[!] nmap exit {tracerout_salida.returncode}:\n{tracerout_salida.stderr}\n"
 
     except Exception as e:
-        resultado_trace += f"\n[!] Error al ejecutar traceroute con nmap: {e}\n"
+        resp_scan_tr += f"\n[!] Error al ejecutar traceroute con nmap: {e}\n"
 
-    print(resultado_trace)
-    return resultado_trace
+    print(resp_scan_tr)
+    return resp_scan_tr
 
 
 def obtener_fecha_hora():
     """
-    Devuelve la fecha y hora actual en formato YYYY-MM-DD_HH-MM-SS.
+    Devuelve la fecha y hora actual con formato YYYY-MM-DD_HH-MM-SS.
     """
     return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
-def guardar_reporte(resultados_scan):
+def guardar_reporte(secciones_reporte):
     """
-    Guarda en un archivo .txt todas las secciones de reporte (en orden).
-    Uso: guardar_reporte("reporte.txt", texto1, texto2, texto3)
+    Guarda un reporte de escaneo en un archivo .txt.
+    Parámetros:
+        secciones_reporte: Lista de textos (cada sección del informe).
+    Efectos:
+        Crea un archivo 'reporte_<timestamp>.txt' con todas las secciones, en orden.
     """
     try:
         print("Generando reporte de escaneo")
         timestamp = obtener_fecha_hora()
-        nombre_archivo = f"reporte_{timestamp}.txt" # Crea el nombre del segun la fecha y el formato
+        nombre_archivo = f"reporte_{timestamp}.txt"
 
-        with open(nombre_archivo, "w", encoding="utf-8") as file:
-            file.write(f"=== REPORTE DE ESCANEO NMAP - ({timestamp}) ===\n\n")
-            for s in resultados_scan:
+        with open(nombre_archivo, "w", encoding="utf-8") as archivo:
+            archivo.write(f"=== REPORTE DE ESCANEO NMAP - ({timestamp}) ===\n\n")
+            for s in secciones_reporte:
                 if s:
-                    file.write(s)
+                    archivo.write(s)
                     if not s.endswith("\n"):
-                        file.write("\n")
+                        archivo.write("\n")
         print(f"[+] Reporte guardado en: {nombre_archivo}")
     except OSError as e:
         print(f"[!] Error guardando reporte: {e}")
 
 if __name__ == "__main__":
     try:
-        scan_bas = escaneo_host_basico(host, puertos)
-        #puertos_abiertos = obtener_puertos_abiertos(escaneo_basico)
-        scan_av = escaneo_host_avanzado(host, scan_bas[1])
-        scan_tr = escaneo_traceroute(host, str(scan_bas[1][0]))
-        resultados = [scan_bas[0], scan_av, scan_tr]
+        # 1) Escaneo básico (puertos abiertos)
+        basico_txt, puertos_abiertos = escaneo_host_basico(host, rango_puertos)
+
+        # 2) Escaneo avanzado (SO, servicios, scripts)
+        avanzado_txt = escaneo_host_avanzado(host, puertos_abiertos)
+
+        # 3) Traceroute (usa el primer puerto abierto)
+        traceroute_txt = escaneo_traceroute(host, str(puertos_abiertos[0]))
+
+        # 4) Guardar reporte final
+        resultados = [basico_txt, avanzado_txt, traceroute_txt]
         guardar_reporte(resultados)
     except Exception as e:
         print(f"[!] Error durante el escaneo: {e}")
