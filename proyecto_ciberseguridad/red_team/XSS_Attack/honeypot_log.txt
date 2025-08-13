@@ -1,0 +1,18 @@
+[2025-08-12 11:35:14] IP: 177.93.10.108
+UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0
+probe: ['1']
+marker: ['phish']
+url: ['http://74.179.81.132/dvwa/vulnerabilities/xss_s/']
+ua: ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0']
+cookies: ['PHPSESSID=j6ugojrbkkiu1te00eqglrk9ue; security=low']
+-------------------------
+[2025-08-12 11:35:23] IP: 177.93.10.108
+UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0
+username: ['Admin']
+password: ['password test']
+origin: ['dvwa-fake-login']
+marker: ['phish']
+page_url: ['http://74.179.81.132/dvwa/vulnerabilities/xss_s/']
+cookies: ['PHPSESSID=j6ugojrbkkiu1te00eqglrk9ue; security=low']
+ua: ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0']
+-------------------------
