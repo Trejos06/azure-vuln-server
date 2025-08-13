@@ -1,63 +1,59 @@
-Honeypot XSS Logger con Ngrok
+# Honeypot XSS Logger con Ngrok
 
-Este proyecto permite levantar un honeypot en Kali Linux que, combinado con Ngrok, hace visible un payload XSS en Internet para capturar credenciales y metadatos de usuarios que interactúen con él.
-📂 Archivos del Proyecto
+Este proyecto permite desplegar un **honeypot** en Kali Linux que, junto con **Ngrok**, expone públicamente un **payload XSS** para capturar credenciales y metadatos de usuarios que interactúen con una página vulnerable.
 
-    p.js
-    Script JavaScript (payload) que se incrusta en la página vulnerable.
+---
 
-        El nombre corto se utiliza para reducir el número de caracteres y ajustarse al límite de 50 caracteres permitido por el campo de inyección.
+## 📂 Archivos del proyecto
 
-        El payload crea una interfaz falsa de login y envía las credenciales al servidor del honeypot.
+| Archivo              | Descripción |
+|----------------------|-------------|
+| **`p.js`**           | Script JavaScript (payload) que se incrusta en la página vulnerable. Utiliza un nombre corto para cumplir con el límite de 50 caracteres en el campo de inyección. Muestra una interfaz falsa de login y envía las credenciales al servidor honeypot. |
+| **`honeypot_logger.py`** | Script en Python que levanta un servidor HTTP en `localhost:8080` para recibir y registrar las credenciales enviadas por el payload. |
+| **`honeypot_log.txt`**   | Archivo de logs donde se registran las interacciones con el honeypot, incluyendo:<br>• IP del cliente (extraída de `X-Forwarded-For`, `X-Real-IP` o `Forwarded`)<br>• User-Agent<br>• Campos enviados (usuario, contraseña, cookies, etc.) |
 
-    honeypot_logger.py
-    Script en Python que levanta un servidor HTTP local en localhost:8080 para recibir y registrar las credenciales enviadas por el payload.
+---
 
-    honeypot_log.txt
-    Archivo donde se almacenan los logs de los diferentes usuarios que han interactuado con el honeypot.
-    Incluye:
+## 🚀 Ejecución
 
-        IP del cliente (obtenida de cabeceras X-Forwarded-For, X-Real-Ip o Forwarded)
+1. **Iniciar el honeypot local**  
+   ```bash
+   python3 honeypot_logger.py
+   ```
 
-        User-Agent
+2. **Exponer el puerto con Ngrok**  
+   ```bash
+   ngrok http 8080
+   ```
 
-        Campos enviados (username, password, cookies, etc.)
+3. **Obtener la URL pública** (Ejemplo)  
+   ```
+   Forwarding  https://b6b97a2903cc.ngrok-free.app -> http://localhost:8080
+   ```
 
-🚀 Ejecución
+4. **Acortar la URL con TinyURL**  
+   - Ir a [https://tinyurl.com/](https://tinyurl.com/)  
+   - La URL corta **debe terminar con `/p.js`**.  
+     Ejemplo:
+     ```
+     https://tinyurl.com/abcd123/p.js
+     ```
 
-    Iniciar el honeypot local
+5. **Actualizar el payload en el script de inyección**  
+   - Abrir `XSS_Payload_Injection.py`  
+   - Ir a la línea **1567** y reemplazar la URL antigua por la nueva URL corta.
 
-python3 honeypot_logger.py
+---
 
-Exponer el puerto con Ngrok
+## 📌 Notas importantes
 
-ngrok http 8080
+- El servidor debe permanecer **activo** mientras se deseen capturar datos.
+- Si Ngrok cambia la URL (por reinicio o reconexión), es necesario:
+  1. Obtener el nuevo `forwarding`.
+  2. Generar un nuevo **TinyURL**.
+  3. Actualizarlo en `XSS_Payload_Injection.py`.
 
-Obtener la URL pública
-Ejemplo:
+---
 
-Forwarding                    https://b6b97a2903cc.ngrok-free.app -> http://localhost:8080
-
-Reducir la URL con TinyURL
-
-    Usar: https://tinyurl.com/
-
-    La URL corta debe terminar con /p.js
-    Ejemplo:
-
-        https://tinyurl.com/abcd123/p.js
-
-    Actualizar el payload en el script de inyección
-    En XSS_Payload_Injection.py, línea 1567, reemplazar la URL antigua por la nueva URL corta.
-
-📌 Notas
-
-    El servidor debe permanecer activo mientras se desee capturar datos.
-
-    Si Ngrok cambia de URL (reinicio o reconexión), es necesario:
-
-        Actualizar el forwarding.
-
-        Generar un nuevo TinyURL.
-
-        Reemplazarlo en XSS_Payload_Injection.py.
+💡 **Recomendación**:  
+Para mantener el payload siempre funcional, considera usar un subdominio dinámico o un servicio de túnel persistente para evitar tener que regenerar el enlace en cada reinicio.
