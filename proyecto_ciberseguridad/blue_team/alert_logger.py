@@ -48,8 +48,3 @@ def block_ip(ip):
 
 if __name__ == "__main__":
   intentos_fallidos()
-
-
-
-
-
