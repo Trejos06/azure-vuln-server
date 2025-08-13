@@ -14,9 +14,9 @@ def intentos_fallidos():
 
       ip_intentos = {}
 
-      for linea in logs [-500]: # esto va a revisar las últimas 500 líneas
-        if "Contraseña fallida." in linea:
-          ip = re.search(r"from (\d+\.\d+\.\d+\.\d+)', linea)
+      for linea in logs[-500:]: # esto va a revisar las últimas 500 líneas
+        if "Failed password" in linea:
+          ip = re.search(r'from (\d+\.\d+\.\d+\.\d+)', linea)
           if ip:
             ip = ip.group(1)
             ip_intentos[ip] = ip_intentos.get(ip, 0) + 1
@@ -29,9 +29,14 @@ def intentos_fallidos():
     print (f"Error: {str(e)}")
 
 def block_ip(ip):
+  if os.path.exists(BLOCKED_IPS_FILE):
+    with open(BLOCKED_IPS_FILE, "r") as f:
+        if ip in f.read():
+            print(f"La IP {ip} ya está bloqueada, se omite.")
+            return
   try:
     # Registra IPs bloqueadas
-    with open (BLOCKED_IPS_FIL, "a") as f:
+    with open (BLOCKED_IPS_FILE, "a") as f:
       f.write(f"{datetime.now()} - IP bloqueada: {ip}\n")
 
     # bloquea con UFW
