@@ -53,16 +53,6 @@ def escaneo_host_basico(host, rango_puertos):
     return resp_scan_b, puertos_abiertos
 
 
-#def obtener_puertos_abiertos(salida_escaneo_basis):
-#    puertos = [] # Lista para guardar los numeros de puertos abiertos
-#    for linea in salida_escaneo_basis.splitlines():
-#        linea = linea.strip()
-#        if linea.startswith('Puerto '):
-#            puertos.append(int(linea.split()[1].rstrip(':')))
-#    puertos_open = ",".join(str(p) for p in sorted(puertos))
-#    return puertos_open
-    
-
 def escaneo_host_avanzado(host, puertos_abiertos):
     """
     Realiza un escaneo avanzado de Nmap sobre los puertos abiertos detectados.
