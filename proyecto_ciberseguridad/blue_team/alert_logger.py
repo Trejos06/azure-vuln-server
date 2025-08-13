@@ -49,22 +49,23 @@ def block_ip(ip):
       ip: Dirección IPv4 detectada en el log.
   """
   # Evitar duplicados consultando el registro local.
-  if os.path.exists(BLOCKED_IPS_FILE):
+  if os.path.exists(BLOCKED_IPS_FILE): 
     with open(BLOCKED_IPS_FILE, "r") as f:
         if ip in f.read():
             print(f"La IP {ip} ya está bloqueada, se omite.")
             return
+        
+  # Registrar el bloqueo con marca de tiempo
   try:
-    # Registrar el bloqueo con marca de tiempo
-    with open (BLOCKED_IPS_FILE, "a") as f:
+    with open (BLOCKED_IPS_FILE, "a") as f: 
       f.write(f"{datetime.now()} - IP bloqueada: {ip}\n")
-
+    
     # Aplicar la regla de firewall con UFW.
     os.system(f"sudo ufw deny from {ip}")
     print (f"IP bloqueada: {ip}")
 
+  # Manejo genérico de errores al registrar o aplicar UFW.
   except Exception as e:
-    # Manejo genérico de errores al registrar o aplicar UFW.
     print (f"Error al bloquear la IP: {str(e)}")
 
 # Ejecución directa del script.
