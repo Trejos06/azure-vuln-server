@@ -109,7 +109,7 @@ def inject_payload(session: requests.Session, marker: str, payload: str) -> tupl
 
 
 def verify_injection(session: requests.Session, xss_url: str, marker: str, payload: str) -> None:
-    """Verifica si el payload quedó reflejado (crudo o escapado) y reporta resultados."""
+    """Verifica si el payload quedó reflejado y reporta resultados."""
     r = session.get(xss_url, timeout=10)
     html = r.text
 
