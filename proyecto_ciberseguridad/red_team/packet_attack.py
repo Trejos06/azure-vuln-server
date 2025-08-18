@@ -2,11 +2,11 @@
 
 from datetime import datetime
 import re
-from scapy.all import IP, TCP, UDP, Raw, sniff, send, RandShort
+from scapy.all import IP, TCP, Raw, sniff, send, RandShort
 
 
 host = "74.179.81.132"
-path_reporte = "/home/juanjo/Ufidelitas/Cuatri4/Programacion Avanzada/reporte_2025-08-12_02-14-19.txt"
+path_reporte_scan = "/home/juanjo/Ufidelitas/Cuatri4/Programacion Avanzada/reporte_2025-08-12_02-14-19.txt"
 
 def validar_puertos_abiertos(path_reporte):
     """
@@ -41,7 +41,7 @@ def envio_TCP(ip_dest, puertos_dest):
 
     cant_paquetes = 10
     ip = IP(dst = ip_dest)
-    resp_puerto = {p: [] for p in puertos_dest}
+    reporte_puertos = {p: [] for p in puertos_dest}
 
     for p in range(cant_paquetes):
         for puerto in puertos_dest:
@@ -53,7 +53,7 @@ def envio_TCP(ip_dest, puertos_dest):
 
             print(f"Paquete TCP-SYN enviado a {ip_dest}:{puerto}\n")
 
-            resp_puerto[puerto].append({
+            reporte_puertos[puerto].append({
                 "numero" : p+1,
                 "tamaño" : len(packet),
                 "IP_O" : packet[IP].src,
@@ -65,13 +65,28 @@ def envio_TCP(ip_dest, puertos_dest):
                 "Seq" : packet[TCP].seq,
                 "CheckSum" : hex(packet[TCP].chksum)})
     
-    return resp_puerto
+    return reporte_puertos
+
+
+def obtener_fecha_hora():
+    """
+    Devuelve la fecha y hora actual con formato YYYY-MM-DD_HH-MM-SS.
+    """
+    return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+
+def guardar_reporte(data_puertos, path_reporte_scan):
+    """
+    Guarda en un archivo .txt el resultado del envio de paquetes
+    """
+    #nuev = f"{nombre_base}_{timestamp}.txt"
+
 
 
 if __name__ == "__main__":
 #    sniffer_de_trafico(host)
 
-    puertos = validar_puertos_abiertos(path_reporte)
+    puertos = validar_puertos_abiertos(path_reporte_scan)
     print("Puertos abiertos:", puertos)
 
     text = envio_TCP(host, puertos)
