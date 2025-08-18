@@ -1,20 +1,24 @@
 ## PACKET_ATTACK
 
 from datetime import datetime
+import os
 import re
 from scapy.all import IP, TCP, Raw, sniff, send, RandShort
 
 
 host = "74.179.81.132"
-path_reporte_scan = "/home/juanjo/Ufidelitas/Cuatri4/Programacion Avanzada/reporte_2025-08-12_02-14-19.txt"
+ruta_actual = os.getcwd()
+print(ruta_actual)
+ruta_reporte_scan = os.path.join(ruta_actual, "ultimo_reporte_scan.txt")
+print(ruta_reporte_scan)
 
-def validar_puertos_abiertos(path_reporte):
+def validar_puertos_abiertos(ruta_reporte):
     """
     Lee el .txt de scanner.py y obtiene una lista de puertos abiertos
     """
     puertos_abiertos = []
 
-    with open(path_reporte, "r", encoding="utf-8") as f:
+    with open(ruta_reporte, "r", encoding="utf-8") as f:
         for linea in f:
             line = linea.strip()
             m = re.search(r"Puerto\s+(\d+):\s+open", line, re.IGNORECASE)
@@ -86,7 +90,7 @@ def guardar_reporte(data_puertos, path_reporte_scan):
 if __name__ == "__main__":
 #    sniffer_de_trafico(host)
 
-    puertos = validar_puertos_abiertos(path_reporte_scan)
+    puertos = validar_puertos_abiertos(ruta_reporte_scan)
     print("Puertos abiertos:", puertos)
 
     text = envio_TCP(host, puertos)
