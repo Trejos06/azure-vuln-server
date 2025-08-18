@@ -77,7 +77,7 @@ def escaneo_host_avanzado(host, puertos_abiertos):
     # Lanzar Nmap en modo avanzado (-A) sobre los puertos abiertos
     try:
         escaner = nmap.PortScanner()
-        escaner.scan(host, puertos, arguments='-Pn -A -sT -T4')
+        escaner.scan(host, puertos, arguments='-Pn -A -sT -T4 --script=default,banner')
     except Exception as e:
         resp_scan_av += f"[!] Error ejecutando escaneo avanzado: {e}\n"
         print(resp_scan_av)
