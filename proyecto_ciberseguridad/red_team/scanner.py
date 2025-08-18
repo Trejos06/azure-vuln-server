@@ -1,6 +1,8 @@
 from datetime import datetime
 import nmap
+import os
 import re
+import shutil
 import subprocess
 
 host = "74.179.81.132"
@@ -202,7 +204,7 @@ def guardar_reporte(secciones_reporte):
     try:
         print("Generando reporte de escaneo")
         timestamp = obtener_fecha_hora()
-        nombre_archivo = f"reporte_{timestamp}.txt"
+        nombre_archivo = f"reporte_scan_{timestamp}.txt"
 
         with open(nombre_archivo, "w", encoding="utf-8") as archivo:
             archivo.write(f"=== REPORTE DE ESCANEO NMAP - ({timestamp}) ===\n\n")
@@ -211,9 +213,21 @@ def guardar_reporte(secciones_reporte):
                     archivo.write(s)
                     if not s.endswith("\n"):
                         archivo.write("\n")
-        print(f"[+] Reporte guardado en: {nombre_archivo}")
+
+        os.makedirs("Reportes_Red_Team", exist_ok=True) # Crea el directorio si no se encuentra en la ruta
+        os.makedirs("Reportes_Red_Team/Reportes_Scanner", exist_ok=True) # Crea el directorio si no se encuentra en la ruta
+        ruta_ultimo = "ultimo_reporte_scan.txt"
+
+        ruta_completa = os.path.join("Reportes_Red_Team/Reportes_Scanner", nombre_archivo)
+        shutil.copy(nombre_archivo, ruta_completa) # Copia el archivo a la carpeta reporte_sistema
+        if os.path.exists(ruta_ultimo):
+            os.remove(ruta_ultimo)
+        os.rename(nombre_archivo, ruta_ultimo)
+        
+        print(f"[+] Reporte guardado en: {ruta_completa}")
     except OSError as e:
         print(f"[!] Error guardando reporte: {e}")
+
 
 if __name__ == "__main__":
     try:
