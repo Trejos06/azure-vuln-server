@@ -9,13 +9,14 @@ def sniffer_de_trafico(host):
     paquetes = sniff(filter=filtro_bpf, iface="wlan0", timeout=30)
 
     for pack in paquetes:
-        if pack.haslayer(Raw):  # Si hay datos en claro
-            try:
-                data = pack[Raw].load.decode(errors="ignore")
-                if "USER" in data or "PASS" in data:
-                    print("[*] Credencial capturada:", data.strip())
-            except:
-                pass
+        print(pack)
+#        if pack.haslayer(Raw):  # Si hay datos en claro
+#            try:
+#                data = pack[Raw].load.decode(errors="ignore")
+#                if "USER" in data or "PASS" in data:
+#                    print("[*] Credencial capturada:", data.strip())
+#            except:
+#                pass
 
 
 if __name__ == "__main__":
