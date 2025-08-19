@@ -197,9 +197,9 @@ def guardar_reporte(secciones_reporte):
     """
     Guarda un reporte de escaneo en un archivo .txt.
     Parámetros:
-        secciones_reporte: Lista de textos (cada sección del informe).
+        secciones_reporte: Lista de salidas de comandos (cada sección del informe).
     Efectos:
-        Crea un archivo 'reporte_<timestamp>.txt' con todas las secciones, en orden.
+        Crea un archivo 'reporte_scan_<timestamp>.txt' con todas las secciones, en orden.
     """
     try:
         print("Generando reporte de escaneo")
@@ -210,19 +210,21 @@ def guardar_reporte(secciones_reporte):
             archivo.write(f"=== REPORTE DE ESCANEO NMAP - ({timestamp}) ===\n\n")
             for s in secciones_reporte:
                 if s:
-                    archivo.write(s)
-                    if not s.endswith("\n"):
-                        archivo.write("\n")
+                    archivo.write(s+"\n")
+#                    if not s.endswith("\n"):
+#                        archivo.write("\n")
 
-        os.makedirs("Reportes_Red_Team", exist_ok=True) # Crea el directorio si no se encuentra en la ruta
-        os.makedirs("Reportes_Red_Team/Reportes_Scanner", exist_ok=True) # Crea el directorio si no se encuentra en la ruta
-        ruta_ultimo = "ultimo_reporte_scan.txt"
+        # Valida y crea la ruta "Reportes_Red_Team/Reportes_Scanner"
+        os.makedirs("Reportes_Red_Team/Reportes_Scanner", exist_ok=True)
+
+        ruta_ultimo = "ultimo_reporte_scan.txt" # Reporte más actualizado
 
         ruta_completa = os.path.join("Reportes_Red_Team/Reportes_Scanner", nombre_archivo)
-        shutil.copy(nombre_archivo, ruta_completa) # Copia el archivo a la carpeta reporte_sistema
-        if os.path.exists(ruta_ultimo):
+
+        shutil.copy(nombre_archivo, ruta_completa) # Copia el archivo al directorio Reportes_Scanner
+        if os.path.exists(ruta_ultimo): # Elimina el reporte ultimo reporte más actualizado
             os.remove(ruta_ultimo)
-        os.rename(nombre_archivo, ruta_ultimo)
+        os.rename(nombre_archivo, ruta_ultimo) # Renombra un nuevo reporte más actualizado
         
         print(f"[+] Reporte guardado en: {ruta_completa}")
     except OSError as e:
