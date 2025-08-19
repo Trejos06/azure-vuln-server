@@ -93,11 +93,15 @@ def escaneo_host_avanzado(host, puertos_abiertos):
 
     # --- Sistemas Operativos (osmatch/osclass) ---
     try:
-        resp_scan_av += "\n<<< Sistemas Operativos encontrados >>>\n"
+        resp_scan_av += (
+            "\n<<< Sistemas Operativos encontrados >>>\n"
+        )
         for info_so in escaner[host].get('osmatch', []):
             nombre_so = info_so.get('name','')
             precision = info_so.get('accuracy','')
-            resp_scan_av += f"\n[+] SO: {nombre_so} - Precision: {precision}%\n"
+            resp_scan_av += (
+                f"\n[+] SO: {nombre_so} - Precision: {precision}%\n"
+            )
             indice = 1
             for perfil in info_so.get('osclass', []):
                 resp_scan_av += f"\n |-- Perfil {indice}\n"
