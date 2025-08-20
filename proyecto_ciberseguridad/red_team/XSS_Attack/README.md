@@ -4,7 +4,7 @@ Este proyecto permite desplegar un **honeypot** en Kali Linux que, junto con **N
 
 ---
 
-## 📂 Archivos del proyecto
+##  Archivos del proyecto
 
 | Archivo              | Descripción |
 |----------------------|-------------|
@@ -14,7 +14,7 @@ Este proyecto permite desplegar un **honeypot** en Kali Linux que, junto con **N
 
 ---
 
-## 🚀 Ejecución
+##  Ejecución
 
 1. **Iniciar el honeypot local**  
    ```bash
@@ -45,7 +45,7 @@ Este proyecto permite desplegar un **honeypot** en Kali Linux que, junto con **N
 
 ---
 
-## 📌 Notas importantes
+##  Notas importantes
 
 - El servidor debe permanecer **activo** mientras se deseen capturar datos.
 - Si Ngrok cambia la URL (por reinicio o reconexión), es necesario:
@@ -55,5 +55,5 @@ Este proyecto permite desplegar un **honeypot** en Kali Linux que, junto con **N
 
 ---
 
-💡 **Recomendación**:  
+ **Recomendación**:  
 Para mantener el payload siempre funcional, considera usar un subdominio dinámico o un servicio de túnel persistente para evitar tener que regenerar el enlace en cada reinicio.
