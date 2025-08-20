@@ -5,7 +5,7 @@ from scapy.all import IP, TCP, Raw, sniff, send, RandInt
 from threading import Thread
 
 
-host = "74.179.81.132"
+HOST = "74.179.81.132"
 ruta_actual = os.getcwd()
 print(ruta_actual)
 ruta_reporte_scan = os.path.join(ruta_actual, "ultimo_reporte_scan.txt")
@@ -14,15 +14,19 @@ print(ruta_reporte_scan)
 
 def validar_puertos_abiertos(ruta_reporte):
     """
-    Lee el .txt de scanner.py y obtiene una lista de puertos abiertos
+    Lee el reporte (txt) generado por scanner.py y obtiene la lista de puertos abiertos
+    Retorna:
+        puertos_abiertos = Lista de puertos abiertos
     """
     puertos_abiertos = []
 
+    # Lee el archivo, y extrae unicamente el numero de puerto
     with open(ruta_reporte, "r", encoding="utf-8") as f:
-        for linea in f:
-            line = linea.strip()
-            m = re.search(r"Puerto\s+(\d+):\s+open", line, re.IGNORECASE)
+        for l in f:
+            linea = l.strip()
+            m = re.search(r"Puerto\s+(\d+):\s+open", linea, re.IGNORECASE)
             if m:
+                # Agrega cada numero a la lista de puertos
                 puertos_abiertos.append(int(m.group(1)))
 
     return puertos_abiertos
@@ -31,6 +35,9 @@ def validar_puertos_abiertos(ruta_reporte):
 def procesar_paquete(paquete, eventos):
     """
     Procesa un paquete capturado como un dict y lo agregra a una lista de eventos.
+    Arg:
+        paquete: 
+        eventos: Lista de eventos
     """
     datos_paquete = { # Dict con los datos del paquete
         "len": len(paquete),
@@ -51,14 +58,13 @@ def procesar_paquete(paquete, eventos):
     eventos.append(datos_paquete)
 
 
-def sniffer_de_trafico(host, eventos):
+def sniffer_de_trafico(eventos):
     """
     Captura de tráfico entre equipo local y el host
     Arg:
-        host: IP del equipo al cual se le hace el Sniff
-        eventos: lista de **********
+        eventos: Lista donde se almacenan los eventos capturados
     """
-    filtro_bpf = f"host {host}"
+    filtro_bpf = f"host {HOST}"
     sniff(
         filter=filtro_bpf,
         iface="wlan0",
@@ -67,18 +73,17 @@ def sniffer_de_trafico(host, eventos):
     )
 
 
-def envio_TCP(ip_dest, puertos_dest):
+def envio_TCP(puertos_dest):
     """
     Envía una cantidad definida de paquetes a los puertos abiertos del host
     Arg:
-        ip_dest: IP del equipo a donde se envían los paquetes
         puertos_dest: Lista de puertos abiertos, obtenida del reporte de scanner.py
     Retorna:
         Reporte de paquetes enviados
     """
 
-    cant_paquetes = 20
-    ip = IP(dst = ip_dest)
+    cant_paquetes = 40
+    ip = IP(dst = HOST)
     reporte_puertos = {p: [] for p in puertos_dest}
 
     for p in range(cant_paquetes):
@@ -89,7 +94,7 @@ def envio_TCP(ip_dest, puertos_dest):
             packet = packet.__class__(bytes(packet))
             send(packet)
 
-            print(f"Paquete TCP-SYN enviado a {ip_dest}:{puerto}\n")
+            print(f"Paquete TCP-SYN enviado a {HOST}:{puerto}\n")
 
             reporte_puertos[puerto].append({
                 "numero" : p+1,
@@ -106,20 +111,23 @@ def envio_TCP(ip_dest, puertos_dest):
     return reporte_puertos
 
 
-def ejecutar_packet_attack(host, puertos):
+def ejecutar_packet_attack(puertos):
     """
     Lanza el sniffer en un thread (daemon) y envía SYN en el thread principal.
     Arg:
-        host:
-        puertos:
+        puertos: Lista de puertos abiertos
     Retorna:
-        reporte_sin, eventos_sniffer).
+        reporte_syn = Datos recolectados al ejecutar el envío de trafico SYN
+        eventos = Lista de eventos encontrados
     """
+    
     eventos = []
-    hilo = Thread(target=sniffer_de_trafico, args=(host, eventos), daemon=True)
-    hilo.start()
 
-    reporte_syn = envio_TCP(host, puertos)
+    # Prepara la funcion de sniffer para ejecutarse como daemon
+    hilo = Thread(target=sniffer_de_trafico, args=(eventos), daemon=True)
+    hilo.start() # Inicia el hilo (daemon)
+
+    reporte_syn = envio_TCP(puertos) # Inicia el envio de trafico
 
     hilo.join()  # espera a que el sniffer termine por timeout
 
@@ -142,12 +150,11 @@ def guardar_reporte(data_puertos, path_reporte_scan):
 
 
 if __name__ == "__main__":
-#    sniffer_de_trafico(host)
-
+    # 1) Se Obtiene la lista de los puertos abiertos
     puertos = validar_puertos_abiertos(ruta_reporte_scan)
     print("Puertos abiertos:", puertos)
-
-    reporte_syn, eventos_sniff = ejecutar_packet_attack(host, puertos)
+    # 2) Se inicia el packet_attack
+    reporte_syn, eventos_sniff = ejecutar_packet_attack(puertos)
     print(f"[+] Eventos sniff capturados: {len(eventos_sniff)}")
 
     #text = envio_TCP(host, puertos)
