@@ -56,14 +56,14 @@ def brute_force_login():
 
                     # Verificar si se logró el login (logout.php aparece en la página)
                     if "logout.php" in driver.page_source.lower():
-                        status = "ÉXITO"
+                        status = "FOUND"
                         print(f"{user}:{pwd} -> {status}")
                         writer.writerow([user, pwd, status])
                         driver.quit()
                         print(f"[INFO] Resultados guardados en {OUTPUT_FILE}")
                         return
                     else:
-                        status = "FALLÓ"
+                        status = "ERROR"
                         print(f"{user}:{pwd} -> {status}")
                         writer.writerow([user, pwd, status])
                 
@@ -77,3 +77,4 @@ def brute_force_login():
 
 if __name__ == "__main__":
     brute_force_login()
+
