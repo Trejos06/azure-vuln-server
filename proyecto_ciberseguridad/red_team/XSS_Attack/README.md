@@ -33,15 +33,20 @@ Este proyecto permite desplegar un **honeypot** en Kali Linux que, junto con **N
 
 4. **Acortar la URL con TinyURL**  
    - Ir a [https://tinyurl.com/](https://tinyurl.com/)  
-   - La URL corta **debe terminar con `/p.js`**.  
+   - La URL debe ser reducidida incluyendo el `/p.js`.  
      Ejemplo:
      ```
-     https://tinyurl.com/abcd123/p.js
+      https://b6b97a2903cc.ngrok-free.app/p.js
      ```
+     Resultado:
+     ```
+     https://tinyurl.com/abcd123
+     ```
+     
 
 5. **Actualizar el payload en el script de inyección**  
    - Abrir `XSS_Payload_Injection.py`  
-   - Ir a la línea **1567** y reemplazar la URL antigua por la nueva URL corta.
+   - Ir a la línea **157** y reemplazar la URL antigua por la nueva URL corta.
 
 ---
 
