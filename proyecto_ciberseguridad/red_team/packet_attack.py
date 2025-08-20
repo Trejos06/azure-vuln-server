@@ -52,9 +52,9 @@ def procesar_paquete(paquete, eventos):
     }
     if paquete.haslayer(Raw):
         try:
-            info["raw"] = paquete[Raw].load.decode(errors="ignore")
+            datos_paquete["raw"] = paquete[Raw].load.decode(errors="ignore")
         except Exception:
-            info["raw"] = None
+            datos_paquete["raw"] = None
     eventos.append(datos_paquete)
 
 
@@ -82,7 +82,7 @@ def envio_TCP(puertos_dest):
         Reporte de paquetes enviados
     """
 
-    cant_paquetes = 40
+    cant_paquetes = 10
     ip = IP(dst = HOST)
     reporte_puertos = {p: [] for p in puertos_dest}
 
@@ -94,7 +94,7 @@ def envio_TCP(puertos_dest):
             packet = packet.__class__(bytes(packet))
             send(packet)
 
-            print(f"Paquete TCP-SYN enviado a {HOST}:{puerto}\n")
+            print(f"Paquete TCP-SYN seq: {packet[TCP].seq} enviado a {HOST}:{puerto}\n")
 
             reporte_puertos[puerto].append({
                 "numero" : p+1,
@@ -124,7 +124,7 @@ def ejecutar_packet_attack(puertos):
     eventos = []
 
     # Prepara la funcion de sniffer para ejecutarse como daemon
-    hilo = Thread(target=sniffer_de_trafico, args=(eventos), daemon=True)
+    hilo = Thread(target=sniffer_de_trafico, args=(eventos,), daemon=True)
     hilo.start() # Inicia el hilo (daemon)
 
     reporte_syn = envio_TCP(puertos) # Inicia el envio de trafico
