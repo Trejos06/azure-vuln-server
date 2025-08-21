@@ -1,7 +1,7 @@
 
 # Azure Vulnerable Server - Proyecto de Ciberseguridad
 
-Este repositorio contiene un entorno de laboratorio prÃ¡ctico para pruebas de ciberseguridad ofensiva y defensiva, ideal para red teamers, estudiantes y entusiastas de la seguridad.
+Este repositorio contiene un entorno de laboratorio práctico para pruebas de ciberseguridad ofensiva y defensiva, ideal para red teamers, estudiantes y entusiastas de la seguridad.
 
 ## Objetivo del proyecto
 
