@@ -1,5 +1,5 @@
 
-# Azure Vulnerable Server â€“ Proyecto de Ciberseguridad
+# Azure Vulnerable Server - Proyecto de Ciberseguridad
 
 Este repositorio contiene un entorno de laboratorio prÃ¡ctico para pruebas de ciberseguridad ofensiva y defensiva, ideal para red teamers, estudiantes y entusiastas de la seguridad.
 
@@ -14,12 +14,12 @@ Simular un entorno realista que contenga:
 
 ### 1. setup_vuln_server.py
 
-Script en Python que automatiza la instalaciÃ³n de:
+Script en Python que automatiza la instalación de:
 
 - Apache + PHP
-- MySQL sin contraseÃ±a (root)
+- MySQL sin contraseña (root)
 - DVWA (Damn Vulnerable Web App)
-- FTP anÃ³nimo con vsftpd
+- FTP anónimo con vsftpd
 - Firewall ufw con puertos esenciales abiertos
 - Archivos trampa para simular actividad maliciosa
 
@@ -32,7 +32,7 @@ cd azure-vuln-server
 sudo python3 setup_vuln_server.py
 ```
 
-Importante: DespuÃ©s de correr el script, se debe acceder a:
+Importante: Después de correr el script, se debe acceder a:
 http://<TU_IP_PUBLICA>/dvwa/setup.php  
 y hacer clic en "Create / Reset Database" para habilitar DVWA.
 
@@ -42,9 +42,9 @@ y hacer clic en "Create / Reset Database" para habilitar DVWA.
 
 Ubicados en proyecto_ciberseguridad/red_team/:
 
-- packet_attack.py: genera trÃ¡fico malicioso
+- packet_attack.py: genera tráfico malicioso
 - ssh_brute.py: ataque de fuerza bruta por SSH
-- scanner.py: escaneo bÃ¡sico de red
+- scanner.py: escaneo básico de red
 - report.md: reporte de pruebas ofensivas
 
 BruteForce_DVWA:
@@ -55,7 +55,7 @@ BruteForce_DVWA:
 XSS_Attack:
 - XSS_Payload_Injection.py: script que inyecta payloads XSS en DVWA
 - honeypot_logger.py: servidor honeypot que recibe credenciales
-- p.js: payload JavaScript para inyecciÃ³n
+- p.js: payload JavaScript para inyección
 - honeypot_log.txt: registro de ataques capturados
 
 ### Blue Team Tools
@@ -69,28 +69,24 @@ Ubicados en proyecto_ciberseguridad/blue_team/:
 
 ## Consideraciones en Azure
 
-1. DespuÃ©s de desplegar la VM:
+1. Después de desplegar la VM:
    - Asociar un Network Security Group (NSG)
-   - Crear una regla de entrada que permita trÃ¡fico en el puerto 80 (HTTP)
+   - Crear una regla de entrada que permita tráfico en el puerto 80 (HTTP)
 
 2. Acceder a DVWA:
    - URL: http://<TU_IP_PUBLICA>/dvwa
    - Usuario: admin
-   - ContraseÃ±a: password
+   - Contraseña: password
 
 ## Advertencias de Seguridad
 
-Este entorno es intencionalmente inseguro. No debe usarse en producciÃ³n ni exponerse a internet sin restricciones.
+Este entorno es intencionalmente inseguro. No debe usarse en producción ni exponerse a internet sin restricciones.
 
 Recomendaciones:
 - Ejecutar solo en laboratorios controlados
-- Tomar snapshots si se harÃ¡n pruebas agresivas
-- No almacenar informaciÃ³n sensible en el entorno
+- Tomar snapshots si se harán pruebas agresivas
+- No almacenar información sensible en el entorno
 
 ## Autor
 
-Creado por Mauricio Trejos para prÃ¡cticas de ciberseguridad ofensiva y defensiva.
-
-## Licencia
-
-MIT License â€“ Libre de uso con fines educativos. El uso indebido es responsabilidad del usuario.
+Creado por el Grupo 4 para prácticas de ciberseguridad ofensiva y defensiva.
