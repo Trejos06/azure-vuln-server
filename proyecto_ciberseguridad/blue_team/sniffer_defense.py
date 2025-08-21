@@ -3,6 +3,7 @@
 from datetime import datetime
 import os
 from scapy.all import IP, TCP, sniff
+import subprocess
 from threading import Thread
 
 
@@ -55,6 +56,20 @@ def log_attack(ip_host, tipo_attaque):
     
     # Ejecuta llenar_log para incluir el evento en el log de ataques
     llenar_log(evento)
+
+
+def bloquear_ip(ip_host):
+    """
+    Bloquear las ip que generen trafico usando iptables (subprocess)
+    Arg:
+      ip_host: IP detectada generando trafico
+    """
+    try:
+        comando = ["iptables", "-A", "INPUT", "-s", ip_host, "-j", "DROP"]
+        subprocess.run(comando, check=True)
+        print(f"[+] IP {ip_host} bloqueada con iptables")
+    except Exception as e:
+        print(f"[!] Error bloqueando IP {ip_host}: {e}")
 
 
 def escanear_trafico():
