@@ -54,7 +54,6 @@ def fuerza_bruta_ssh(lista_claves):
         return
     
     reporte_fallidos = "----- Info de Intentos Fallidos -----\n\n"
-
     reporte_ssh = "----- Info de Ataque de Diccinario -----\n\n"
     
     intentos = 0 # Intentos de autenticacion fallidos
@@ -137,8 +136,6 @@ def transferir_archivos(conexion_ssh):
     """
     reporte_sftp = ("-----Información de conexión SFTP-----\n\n")
 
-    
-
     try:
         cliente_sftp = conexion_ssh.open_sftp() # Se inicia la conexion sftp
 
@@ -160,7 +157,7 @@ def transferir_archivos(conexion_ssh):
                 )
             print(
                 f"[+] {cant_archivos} archivos encontrados.\n\n"
-                "=== Iniciando transferencia de archivos ===\n"
+                ">> Iniciando descarga de archivos\n"
                 )
             cant_descargados = 0 # Contador de archivos descargados
             for archivo in lista_archivos:
@@ -175,7 +172,6 @@ def transferir_archivos(conexion_ssh):
                     error_des = f"[!] Error al descargar el archivo: {archivo}"
                     print(error_des)
                     reporte_sftp += error_des
-            print(f"\n{"-" * 70}\n")
 
         print(">> Subiendo archivo local\n")
         reporte_sftp += ("---Detalle de subida de archivos---\n")
@@ -219,7 +215,6 @@ def guardar_reporte(dict_comm, ssh_repo, sftp_repo):
         ssh_repo: Reporte de datos obtenidos en la captura de trafico
         sftp_repo: 
     """
-
     try:
         print("-" * 70)
         print("\n=== Generando reporte de Brute Force ===\n")
@@ -257,6 +252,11 @@ def guardar_reporte(dict_comm, ssh_repo, sftp_repo):
 
 
 if __name__ == "__main__":
+    # 1) Extrae la lista de claves
     lista_claves = cargar_dict()
+
+    # 2) Realiza el ataque de fuerza bruta y transferencia de archivos
     dict, ssh, sftp = fuerza_bruta_ssh(lista_claves)
+
+    # 3) Genera y guarda el reporte
     guardar_reporte(dict, ssh, sftp)
