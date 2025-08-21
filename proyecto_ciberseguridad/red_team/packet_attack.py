@@ -1,5 +1,5 @@
 from datetime import datetime
-from scapy.all import IP, TCP, Raw, sniff, send, RandInt
+from scapy.all import IP, RandInt, sniff, send, TCP
 from threading import Thread
 
 import os
@@ -49,8 +49,8 @@ def procesar_paquete(paquete, trafico_sniffer):
     # Almacena todos los datos que se capturan en el sniffer
     try:
         datos_paquete = {
-            "summary": paquete.summary(),
-            "datos": paquete.show(dump=True)
+            "summary": paquete.summary()
+            #"datos": paquete.show(dump=True)
         }
 
         # Agrega el paquete a la lista de eventos
@@ -100,6 +100,7 @@ def envio_TCP(puertos_dest):
     inicio = time.time()
     cant_paquetes = 0
 
+    # Ejecuta el envio de paquetes por un tiempo definido
     while time.time() - inicio < tiempo_envio:
         cant_paquetes += 1
         # Envia un paquete a cada puerto abierto
@@ -150,10 +151,15 @@ def ejecutar_packet_attack(puertos):
         # Prepara la funcion de sniffer para ejecutarse como daemon
         hilo = Thread(target=sniffer_de_trafico, args=(trafico_generado,), daemon=True)
         hilo.start() # Inicia el hilo (daemon)
+        print("[+] Iniciando Sniffer de trafico...\n")
 
+        print("[+] Iniciando Envio de paquetes SYN...\n")
         reporte_syn = envio_TCP(puertos) # Inicia el envio de trafico
+        print("[+] Envio de paquetes SYN finalizado!\n")
 
         hilo.join()  # Espera a que el sniffer termine por timeout
+
+        print("[+] Sniffer de trafico finalizado!\n")
         
         return reporte_syn, trafico_generado
     
@@ -167,39 +173,48 @@ def obtener_fecha_hora():
     """
     return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+
 def formatear_reportes(datos_envio, datos_sniff, timestamp):
     """
     Da formato legible al reporte generado con envio_TCP
     Retorna:
-        txt_envio_syn:
-        txt_cap_sniff:
+        txt_envio_syn: Informacion del envio de SYN en formato legible para el usuario
+        txt_cap_sniff: Informacion de la captura de trafico en formato legible para el usuario
     """
+
+    # Estructura del Reporte de envios SYN
     txt_envio_syn = f"""
     ====== REPORTE DE ENVIOS SYN - ({timestamp}) ======
     Fecha/Hora: {timestamp}
     IP de host atacado: {HOST}
-    Tiempo de envío de paquetes: {TIMEOUT_ENV_PAQ}\n\n"""
+    Tiempo de envío de paquetes: {TIMEOUT_ENV_PAQ} seg\n\n"""
+    try:
+        for puerto, paquetes in datos_envio.items(): # Recorre cada protocolo
+            txt_envio_syn += (f"\n    Puerto: [ {puerto} ]\n")
+            for info in paquetes: # Recorre cada paquete que se encuentre en el protocolo
+                txt_envio_syn += (
+                    f"    Paq # {str(info['numero']).ljust(3)}"
+                    f" | Seq = {str(info['seq']).ljust(10)}"
+                    f" | Flag {info['flag']}"
+                    f" | {info['ip_o']} >> {info['ip_d']}"
+                    f" | Puerto Salida = {info['puerto_o']}"
+                    f" | Hora = {info['time']}\n"
+                    )
+    except Exception as e:
+        print(f"Error al dar formato a reporte de envion SYN: {e}")
     
-    for puerto, paquetes in datos_envio.items():
-        txt_envio_syn += (f"\n    Puerto: [ {puerto} ]\n")
-        for info in paquetes:
-            txt_envio_syn += (
-                f"    Paq # {str(info['numero']).ljust(3)}"
-                f" | Seq = {str(info['seq']).ljust(10)}"
-                f" | Flag {info['flag']}"
-                f" | {info['ip_o']} >> {info['ip_d']}"
-                f" | Puerto Salida = {info['puerto_o']}"
-                f" | Hora = {info['time']}\n"
-                )
-    
+    # Estructura del Reporte de captura de trafico
     txt_cap_sniff = f"""
     ====== REPORTE DE CAPTURA DE SNIFFER- ({timestamp}) ======
     Fecha/Hora: {timestamp}
     IP de host atacado: {HOST}
-    Tiempo de captura: {TIMEOUT_SNIFFER}\n\n"""
+    Tiempo de captura: {TIMEOUT_SNIFFER} seg\n\n"""
     
-    for ev in datos_sniff:
-        txt_cap_sniff += f"    {ev["summary"]}\n"
+    try:
+        for evento in datos_sniff: # Recorre cada evento capturado por el sniffer
+            txt_cap_sniff += f"    {evento["summary"]}\n"
+    except Exception as e:
+        print(f"Error al dar formato a reporte de Sniffer: {e}")
 
     return txt_envio_syn, txt_cap_sniff
 
@@ -217,13 +232,16 @@ def guardar_reporte(datos_envio, datos_sniff):
         print("\nGenerando reporte de ataque.....\n")
         timestamp = obtener_fecha_hora()
         
+        # Se definen los nombres de los reportes segun el timestamp
         nombre_repo_syn = f"reporte_envio_paquetes_{timestamp}.txt"
         nombre_repo_sniff = f"reporte_sniffer_{timestamp}.txt"
-        nombres = [nombre_repo_syn, nombre_repo_sniff]
+        nombres = [nombre_repo_syn, nombre_repo_sniff] # Lista con los nombres
 
+        # Se da formato a los reportes con la funcion "formatear reportes"
         repo_syn, repo_sniff = formatear_reportes(datos_envio, datos_sniff, timestamp)
-        repos = [repo_syn, repo_sniff]
+        repos = [repo_syn, repo_sniff] # Lista con los reportes legibles
 
+        # Se guardan los reportes en equipo
         for x in range(2):
             with open(nombres[x], "w", encoding="utf-8") as archivo:
                 archivo.write(repos[x])
@@ -250,8 +268,9 @@ if __name__ == "__main__":
     print("Puertos abiertos:", puertos)
 
     # 2) Se inicia el packet_attack
+    print("-" * 70)
     reporte_syn, eventos_sniff = ejecutar_packet_attack(puertos)
-    print(f"[+] Eventos sniff capturados: {len(eventos_sniff)}")
+    print(f"Total de eventos capturados: {len(eventos_sniff)}\n")
 
     # 3) Se guarda el reporte del Packet_attack
     guardar_reporte(reporte_syn, eventos_sniff)
