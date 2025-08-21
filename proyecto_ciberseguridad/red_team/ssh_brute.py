@@ -6,14 +6,15 @@ import shutil
 
 
 DICT_CLAVES = "dict.txt"
+ARCHIVO_SUBIDA = "ATTACK.txt"
 RUTA_LOCAL = os.getcwd()
 HOST = "74.179.81.132"
 USUARIO = "labssh"
 # Lista de comandos para ejecutar dentro de la conexion SSH
 COMANDOS = [
     "ls -lha",
-    "ls",
-    "cat dict.txt",
+    "ps aux | grep ssh",
+    "last -n 5",
     ]
 
 
@@ -176,12 +177,12 @@ def transferir_archivos(conexion_ssh):
         print(">> Subiendo archivo local\n")
         reporte_sftp += ("---Detalle de subida de archivos---\n")
 
-        ruta_archivo = os.path.join(RUTA_LOCAL,DICT_CLAVES)
+        ruta_archivo = os.path.join(RUTA_LOCAL,ARCHIVO_SUBIDA)
         try:
             # Se envia un archivo local al host objetivo
-            cliente_sftp.put(ruta_archivo, "/home/labssh/dict.txt")
+            cliente_sftp.put(ruta_archivo, "/home/labssh/ATTACK.txt")
             print("[+] Archivo subido con exito\n")
-            reporte_sftp += (f"Archivo subido: dict.txt\n")
+            reporte_sftp += (f"Archivo subido: {ARCHIVO_SUBIDA}\n")
         except:
             error_sub = f"[!] Error al subir el archivo local\n"
             print(error_sub)
