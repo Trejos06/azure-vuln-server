@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
 # Configuración de la URL y archivos de entrada/salida
-URL = "http://172.171.243.146/dvwa/login.php"
+URL = "http://74.179.81.132/dvwa/login.php"
 USERS_FILE = "BruteForce_DVWA/users.txt"
 PASSWORDS_FILE = "BruteForce_DVWA/passwords.txt"
 OUTPUT_FILE = "BruteForce_DVWA/bf_log.csv"
@@ -36,7 +36,7 @@ def brute_force_login():
 
     # Configuración de Chrome (headless = no abre ventana)
     options = Options()
-    options.add_argument("--headless=new")
+    #options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
     # Abrir archivo CSV para registrar intentos
@@ -77,4 +77,3 @@ def brute_force_login():
 
 if __name__ == "__main__":
     brute_force_login()
-
