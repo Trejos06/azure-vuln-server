@@ -219,7 +219,7 @@ def guardar_reporte(secciones_reporte):
         print("-" * 70)
         print("\nGenerando reporte de escaneo.....\n")
         timestamp = obtener_fecha_hora()
-        nombre_archivo = f"reporte_scan_{timestamp}.txt"
+        nombre_archivo = f"reporte_scan_-{timestamp}.txt"
 
         with open(nombre_archivo, "w", encoding="utf-8") as archivo:
             archivo.write(f"=== REPORTE DE ESCANEO NMAP - ({timestamp}) ===\n\n")
