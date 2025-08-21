@@ -210,14 +210,14 @@ def obtener_fecha_hora():
 def guardar_reporte(secciones_reporte):
     """
     Guarda un reporte de escaneo en un archivo .txt.
-    Parámetros:
+    Arg:
         secciones_reporte: Lista de salidas de comandos (cada sección del informe).
     Efectos:
         Crea un archivo 'reporte_scan_<timestamp>.txt' con todas las secciones, en orden.
     """
     try:
         print("-" * 70)
-        print("\nGenerando reporte de escaneo\n")
+        print("\nGenerando reporte de escaneo.....\n")
         timestamp = obtener_fecha_hora()
         nombre_archivo = f"reporte_scan_{timestamp}.txt"
 
@@ -259,6 +259,6 @@ if __name__ == "__main__":
         # 4) Guardar reporte final
         resultados = [basico_txt, avanzado_txt, traceroute_txt]
         guardar_reporte(resultados)
-        
+
     except Exception as e:
         print(f"[!] Error durante el escaneo: {e}")
