@@ -50,7 +50,6 @@ def procesar_paquete(paquete, trafico_sniffer):
     try:
         datos_paquete = {
             "summary": paquete.summary()
-            #"datos": paquete.show(dump=True)
         }
 
         # Agrega el paquete a la lista de eventos
@@ -253,8 +252,8 @@ def guardar_reporte(datos_envio, datos_sniff):
         ruta_sniff = os.path.join("Reportes_Red_Team/Reportes_Packet_Attack", nombres[1])
 
         # Copia los archivos al directorio Reportes_Packet_Attack
-        shutil.move(nombres[0], ruta_syn)
-        shutil.move(nombres[1], ruta_sniff)
+        shutil.copy(nombres[0], ruta_syn)
+        shutil.copy(nombres[1], ruta_sniff)
         
         print("[+] Reporte guardado en: Reportes_Red_Team/Reportes_Packet_Attack/\n")
     except OSError as e:
