@@ -252,8 +252,8 @@ def guardar_reporte(datos_envio, datos_sniff):
         ruta_sniff = os.path.join("Reportes_Red_Team/Reportes_Packet_Attack", nombres[1])
 
         # Copia los archivos al directorio Reportes_Packet_Attack
-        shutil.copy(nombres[0], ruta_syn)
-        shutil.copy(nombres[1], ruta_sniff)
+        shutil.move(nombres[0], ruta_syn)
+        shutil.move(nombres[1], ruta_sniff)
         
         print("[+] Reporte guardado en: Reportes_Red_Team/Reportes_Packet_Attack/\n")
     except OSError as e:
