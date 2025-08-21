@@ -13,35 +13,38 @@ def escaneo_host_basico():
     Realiza un escaneo básico para descubrir puertos abiertos.
     Ejecuta: nmap -sS --open -p <rango_puertos> <objetivo>
     Retorna:
-        Texto con el reporte y lista de puertos abiertos.
+        resp_scan_b: Reporte del escaneo básico (txt)
+        puertos_abiertos: Lista de puertos abiertos
     """
     puertos_abiertos = []
     print("-" * 70)
     print(f"[+] Escaneo básico en el host: {HOST}\n")
     resp_scan_b = "--------------- Puertos abiertos encontrados ---------------\n"
 
-    # Lanzar Nmap (escaneo rápido SYN, solo puertos abiertos)
+    # Ejecuta Nmap (escaneo rápido SYN para encontrar puertos abiertos)
     try:
-        escaner = nmap.PortScanner()# Instancia Scanner
+        escaner = nmap.PortScanner() # Instancia Scanner
         escaner.scan(HOST, RANGO_PUERTOS, arguments='-sS --open')
     except Exception as e:
         resp_scan_b += f"[!] Error ejecutando Nmap básico: {e}\n"
-        print(resp_scan_b)
         return resp_scan_b, puertos_abiertos
 
-    # Verificación de host presente en resultados parseados
+    # Verifica que el host aparezca en el escaneo
     if HOST not in escaner.all_hosts():
         resp_scan_b += "[!] Host sin respuesta\n"
         print(resp_scan_b)
         return resp_scan_b, puertos_abiertos
 
-    # Recorrido de protocolos y puertos abiertos reportados
+    
     try:
+        # Revisa cada protocolo
         for protocolo in escaner[HOST].all_protocols():
             resp_scan_b += f"\n[+] Protocolo: {protocolo}\n"
-            puertos_dict = escaner[HOST][protocolo]
+            puertos_dict = escaner[HOST][protocolo] # Dict con puertos
             if not puertos_dict:
-                resp_scan_b += "    (sin puertos reportados)\n"
+                resp_scan_b += "    Sin puertos reportados!\n"
+                break
+            # Guarda la información de los puertos por protocolo
             for puerto in sorted(puertos_dict):
                 puertos_abiertos.append(puerto)
                 servicio = puertos_dict[puerto]['name']
@@ -50,24 +53,22 @@ def escaneo_host_basico():
         resp_scan_b += f"\n[!] Error procesando salida básica: {e}\n"
 
     print(resp_scan_b)
-    #print("\n"+("-" * 70))
     return resp_scan_b, puertos_abiertos
-
 
 
 def escaneo_host_avanzado(puertos_abiertos):
     """
     Realiza un escaneo avanzado de Nmap sobre los puertos abiertos detectados.
     Ejecuta: nmap -Pn -A -sT -T4 -p <puertos_abiertos> <host>
-    Parámetros:
-        host: IP o hostname a escanear.
-        puertos_abiertos: Puertos abiertos a detallar.
+    Arg:
+        puertos_abiertos: Puertos abiertos encontrados en escaneo básico.
     Retorna:
-        Texto con reporte detallado (SO, servicios/puertos, scripts).
+        resp_scan_av: Reporte detallado (SO, servicios/puertos, scripts)
     """
-    resp_scan_av = "--------------- Informacion detallada del escaneo ---------------\n"
 
-    # Validación temprana: no hay puertos abiertos para escanear
+    resp_scan_av = "--------------- Informacion detallada del escaneo ---------------\n"
+    
+    # Valida que hayan puertos abiertos
     if not puertos_abiertos:
         resp_scan_av += "[!] No hay puertos abiertos para escanear.\n"
         print(resp_scan_av)
@@ -77,35 +78,37 @@ def escaneo_host_avanzado(puertos_abiertos):
     print("-" * 70)
     print(f"\n[+] Iniciando el escaneo avanzado en los puertos abiertos\n")
 
-    # Lanzar Nmap en modo avanzado (-A) sobre los puertos abiertos
+    # Ejecuta Nmap (escaneo agresivo -A sobre puertos abiertos)
     try:
-        escaner = nmap.PortScanner()
-        escaner.scan(HOST, puertos, arguments='-Pn -A -sT -T4 --script=default,banner')
+        escaner = nmap.PortScanner() # Instancia de Scanner
+        escaner.scan(HOST, puertos, arguments='-Pn -A -sT -T4')
     except Exception as e:
         resp_scan_av += f"[!] Error ejecutando escaneo avanzado: {e}\n"
         print(resp_scan_av)
         return resp_scan_av
 
-    # Verificación de host presente
+    # Verifica que el host aparezca en el escaneo
     if HOST not in escaner.all_hosts():
         resp_scan_av += "[!] Host sin respuesta\n"
         print(resp_scan_av)
         return resp_scan_av
 
-    # --- Sistemas Operativos (osmatch/osclass) ---
+    # Extrae información de sistemas operativos (osmatch/osclass)
     try:
         resp_scan_av += (
             "\n<<< Sistemas Operativos encontrados >>>\n"
         )
+        # osmatch
         for info_so in escaner[HOST].get('osmatch', []):
-            nombre_so = info_so.get('name','')
-            precision = info_so.get('accuracy','')
+            nombre_so = info_so.get('name','') # Nombre de SO
+            precision = info_so.get('accuracy','') # Probabilidad de acertar
             resp_scan_av += (
                 f"\n[+] SO: {nombre_so} - Precision: {precision}%\n"
             )
             indice = 1
+            # osclass
             for perfil in info_so.get('osclass', []):
-                resp_scan_av += f"\n |-- Perfil {indice}\n"
+                resp_scan_av += f"\n |-- Perfil {indice}\n" 
                 resp_scan_av += f"   |-- Tipo: {perfil.get('type','')}\n"
                 resp_scan_av += f"   |-- Fabricante: {perfil.get('vendor','')}\n"
                 resp_scan_av += f"   |-- Familia: {perfil.get('osfamily','')}\n"
@@ -113,20 +116,22 @@ def escaneo_host_avanzado(puertos_abiertos):
     except Exception as e:
         resp_scan_av += f"\n[!] Error obteniendo información de SO: {e}\n"
 
-    # --- Protocolos y Servicios (por puerto) ---
+    # Extrae información de protocolos y servicios por puerto
     try:
         resp_scan_av += "\n\n<<< Protocolos encontrados >>>\n\n"
+        # Revisa cada protocolo
         for protocolo in escaner[HOST].all_protocols():
             resp_scan_av += f"[+] Protocolo: {protocolo}"
-            puertos = escaner[HOST][protocolo]
-            if not puertos:
-                resp_scan_av += "    (sin puertos reportados)\n"
-            for puerto in sorted(puertos):
+            puertos_dict = escaner[HOST][protocolo] # Dict de puertos
+            if not puertos_dict:
+                resp_scan_av += "    Sin puertos reportados\n"
+            # Guarda la información de los puertos por protocolo
+            for puerto in sorted(puertos_dict):
                 try:
                     info_puerto = escaner[HOST][protocolo][puerto]
                     servicio = info_puerto.get('name', '')
                     version = f"{info_puerto.get('product', '')} {info_puerto.get('version', '')}"
-                    scripts = info_puerto.get('script', {})
+                    scripts = info_puerto.get('script', {}) # Extrae scripts NSE
 
                     resp_scan_av += f"\n\n |-- Puerto {puerto}/{protocolo}\n"
                     resp_scan_av += f"   |-- Estado: {info_puerto.get('state', '')}\n"
@@ -134,6 +139,7 @@ def escaneo_host_avanzado(puertos_abiertos):
                     resp_scan_av += f"   |-- Version: {version}\n"
                     resp_scan_av += f"   |-- Info Extra: {info_puerto.get('extrainfo', '')}\n"
 
+                    # Si hay script NSE, guarda la información
                     if scripts:
                         resp_scan_av += f"\n NSE SCRIPTS:"
                         for script_name, script_salida in scripts.items():
@@ -147,32 +153,36 @@ def escaneo_host_avanzado(puertos_abiertos):
     return resp_scan_av
 
 
-def escaneo_traceroute(puerto_unico):
+def escaneo_traceroute(host, puerto_unico):
     """
-    Ejecuta un traceroute con Nmap (usando subprocess) para extraer:
+    Ejecuta un traceroute de Nmap (usando subprocess) y extrae:
     - Distancia de red
     - Sección de TRACEROUTE completa
-    Parámetros:
+    Arg:
         host: IP o hostname de destino.
-        puerto_unico: Puerto a usar con -O (mejora probabilidad de distancia).
+        puerto_unico: Puerto a usar con -O (puerto 80 por defecto).
     Retorna:
-        Texto con la información de red (distancia + traceroute).
+        resp_scan_tr: Información de salida del traceroute.
     """
+    # Valida si el puerto esta, si no usa puerto 80 por defecto
     if not puerto_unico:
         puerto_unico = "80"
 
     resp_scan_tr = "\n\n<<< Información de red >>>\n"
+
     try:
-        cmd = ["nmap", "-Pn", "-O", "-p", puerto_unico, "--traceroute", HOST]
+        cmd = ["nmap", "-Pn", "-O", "-p", puerto_unico, "--traceroute", host]
+        
+        # Ejecuta el comando de traceroute
         tracerout_salida = subprocess.run(cmd, capture_output=True, text=True, check=False)
         salida = tracerout_salida.stdout
 
-        # Extraer distancia: "Network Distance: 30 hops"
+        # Extrae distancia (saltos)
         distancia = re.search(r'Network Distance:\s*(\d+)\s*hops?', salida)
         distancia = distancia.group(1)
         resp_scan_tr += f"\n[+] Número de saltos hasta el host: {distancia}\n"
         
-        # Extraer bloque de TRACEROUTE (tal cual lo imprime Nmap)
+        # Extrae bloque de traceroute 
         tracert = re.search(r'TRACEROUTE(.+)', salida, re.DOTALL | re.IGNORECASE)
         if tracert:
             tracert_txt = tracert.group(1).strip()
@@ -180,7 +190,6 @@ def escaneo_traceroute(puerto_unico):
         else:
             resp_scan_tr += "\n[!] No se encontró sección de traceroute.\n"
 
-        # Reportar si Nmap devolvió código distinto de 0 (informativo)
         if tracerout_salida.returncode != 0:
             resp_scan_tr += f"\n[!] nmap exit {tracerout_salida.returncode}:\n{tracerout_salida.stderr}\n"
 
@@ -218,7 +227,7 @@ def guardar_reporte(secciones_reporte):
                 if s:
                     archivo.write(s+"\n")
 
-        # Valida y crea la ruta "Reportes_Red_Team/Reportes_Scanner"
+        # Valida que exista o crea la ruta "Reportes_Red_Team/Reportes_Scanner"
         os.makedirs("Reportes_Red_Team/Reportes_Scanner", exist_ok=True)
 
         ruta_ultimo = "ultimo_reporte_scan.txt" # Reporte más actualizado
@@ -226,8 +235,8 @@ def guardar_reporte(secciones_reporte):
         ruta_completa = os.path.join("Reportes_Red_Team/Reportes_Scanner", nombre_archivo)
 
         shutil.copy(nombre_archivo, ruta_completa) # Copia el archivo al directorio Reportes_Scanner
-        if os.path.exists(ruta_ultimo): # Elimina el reporte ultimo reporte más actualizado
-            os.remove(ruta_ultimo)
+        if os.path.exists(ruta_ultimo): 
+            os.remove(ruta_ultimo) # Valida y elimina el archivo "ultimo_reporte_scan"
         os.rename(nombre_archivo, ruta_ultimo) # Renombra un nuevo reporte más actualizado
         
         print(f"[+] Reporte guardado en: {ruta_completa}\n")
@@ -245,10 +254,11 @@ if __name__ == "__main__":
         avanzado_txt = escaneo_host_avanzado(puertos_abiertos)
 
         # 3) Traceroute (usa el primer puerto abierto)
-        traceroute_txt = escaneo_traceroute(str(puertos_abiertos[0]))
+        traceroute_txt = escaneo_traceroute(HOST, str(puertos_abiertos[0]))
 
         # 4) Guardar reporte final
         resultados = [basico_txt, avanzado_txt, traceroute_txt]
         guardar_reporte(resultados)
+        
     except Exception as e:
         print(f"[!] Error durante el escaneo: {e}")
