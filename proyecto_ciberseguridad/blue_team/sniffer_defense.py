@@ -1,28 +1,112 @@
 # sniffer_defense.py - se encarga de detectar ataques básicos
 
-import time
-from sccapy.all import *
+from datetime import datetime
+import os
+from scapy.all import IP, TCP, sniff
+from threading import Thread
 
-PUERTOS_SOSPECHOSOS = [21, 23, 3306, 8080] # los puertos que se van a atacar (no recuerdo si eran esos)
 
-def packet_handler(packet):
-  if packet.haslayer(TCP):
-    src_ip = packet[IP].src
-    dst_port = packet[TCP].dport
+PUERTOS_SOSPECHOSOS = list(range(0,200)) # Puertos utilizados en el escaneo (Red Team)
+LOG_ATAQUE = "attack_log.txt"
+RUTA_LOG = "Reportes_Red_Team/Reportes_Sniffer_Defense"
+TIMEOUT_SNIFF = 300
 
-    # se detecta el escaneo de puertos
-    if packet[TCP].flags == "S" and dst_port in PUERTOS_SOSPECHOSOS:
-      log_attack(src_ip, f"Escaeo en puerto {dst_port}")
 
-    # se detecta SYN flood
-    if packet[TCP].flags == "S" and not packet.haslayer(Raw):
-      log_attack(src_ip, "Posible SYN flood")
+def packet_handler(paquete):
+    """
+    Procesa cada paquete TCP recibido
+    Arg:
+      paquete: Cada paquete capturado con el sniff
+    """
+    # Se valida que el paquete sea TCP y contenga una IP
+    try:
+      if paquete.haslayer(TCP) and paquete.haslayer(IP):
+        ip_host = paquete[IP].src # IP de atacante
+        puerto_dst = paquete[TCP].dport # Puerto destino
+        flag = paquete[TCP].flags # Flag en el paquete
 
-def log_attack(ip, attack_type):
-  timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-  with open("attack_log.txt", "a") as f:
-    f.write(f"{timestamp} - Ataque {attack_type} desde {ip}\n")
-  print (f"Alerta: {attack_type} desde {ip}")
+        # Valida si es SYN y si la IP se encuentra entre las IPs sospechosas
+        if flag & 0x02 and puerto_dst in PUERTOS_SOSPECHOSOS:
+          log_attack(ip_host, f"Posible ATK SYN en puerto: {puerto_dst}")
 
-print ("Iniciando la detección de tráfico sospechoso...")
-sniff(prn = packet_handler, store = 0, filter = "tcp")
+        # Valida si es SYN y si contiene Paylod
+        if flag & 0x02 and not paquete.haslayer("Raw"):
+          log_attack(ip_host, "Posible SYN flood")
+
+        # Valida si es ACK sin SYN
+        if flag & 0x010 and not (flag & 0x02):
+          log_attack(ip_host, "Posible ACK scan")
+
+    except Exception as e:
+      print(f"[!] Error :{e}")
+
+
+def log_attack(ip_host, tipo_attaque):
+    """
+    Da formato al paquete capturado y lo almacena en log (llenar log)
+    Arg:
+      ip_host: IP del atacante
+      tipo_ataque: Detalle del ataque
+    """
+    timestamp = obtener_fecha_hora()
+
+    # Estructura del evento captuado
+    evento = f"[!] - {timestamp} - {tipo_attaque} desde: {ip_host}"
+    
+    # Ejecuta llenar_log para incluir el evento en el log de ataques
+    llenar_log(evento)
+
+
+def escanear_trafico():
+    """
+    Ejecuta el sniff de trafico en la red
+    """
+    try:
+        sniff(
+            prn=packet_handler,   # Pasa el paquete al handler
+            store=0,              # Evita guardar en memoria
+            filter="tcp",         # Filta solo trafico TCP
+            timeout=TIMEOUT_SNIFF # Time out antes de detener el sniffing
+        )
+    except Exception as e:
+        print(f"[!] Error en sniffer: {e}")
+
+
+def ejecutar_escaneo():
+    """
+    Ejecuta el sniffer en un thread (daemon)
+    """
+    hilo = Thread(target=escanear_trafico, daemon=True)
+
+    # Inicial el daemon
+    hilo.start()
+
+
+def obtener_fecha_hora():
+    """
+    Devuelve la fecha y hora actual con formato YYYY-MM-DD_HH-MM-SS.
+    """
+    return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+
+def llenar_log(evento):
+    """
+    Llena el log de eventos
+    Arg:
+      evento: Cada evento capturado
+    """
+    # Valida o crea la ruta para guardar los Logs
+    os.makedirs(RUTA_LOG, exist_ok=True)
+
+    ruta_completa = os.path.join(RUTA_LOG, LOG_ATAQUE)
+
+    # Agrega cada evento al log
+    with open(ruta_completa, "a") as f:
+      f.write(evento+"\n")
+   
+
+
+if __name__ == "__main__":
+    print(" Iniciando escaneo de tráfico sospechoso en la red\n")
+    # 1) Se inicia el escaneo de la red
+    ejecutar_escaneo()
